@@ -1,0 +1,65 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "..\\esp-idf\\examples\\peripherals\\i2c\\i2c_tools"
+		},
+		{
+			"path": "..\\infrared_camera"
+		},
+		{
+			"path": "E:\\TU München\\Masterarbeit\\手册\\grid-eye_api_v2.1"
+		},
+		{
+			"path": "..\\esp-idf\\examples\\wifi\\getting_started\\station"
+		},
+		{
+			"path": "..\\esp-idf\\examples\\protocols\\mqtt\\tcp"
+		}
+	],
+	"settings": {
+		"terminal.integrated.shell.windows": "cmd.exe",
+		"terminal.integrated.shellArgs.windows": [
+				"/k",
+				"D:/esp/esp-idf/export.bat"
+			],
+			"files.associations": {
+				"sdkconfig.h": "c",
+				"freertos.h": "c",
+				"stdio.h": "c",
+				"reent.h": "c",
+				"uart.h": "c",
+				"task.h": "c",
+				"*.ipp": "c",
+				"gpio.h": "c",
+				"i2c_periph.h": "c",
+				"grideye_api_common.h": "c",
+				"*.tcc": "cpp",
+				"complex": "cpp",
+				"string": "cpp",
+				"vector": "cpp",
+				"fstream": "cpp",
+				"limits": "cpp",
+				"sstream": "cpp",
+				"utility": "cpp",
+				"*.inc": "cpp",
+				"i2c.h": "c",
+				"event_groups.h": "c",
+				"err.h": "c",
+				"sys.h": "c",
+				"esp_log.h": "c",
+				"esp_event.h": "c",
+				"esp_wifi.h": "c",
+				"semphr.h": "c",
+				"mqtt_client.h": "c",
+				"protocol_examples_common.h": "c",
+				"network_common.h": "c",
+				"stddef.h": "c",
+				"stdlib.h": "c",
+				"time.h": "c"
+			},
+			"idf.portWin": "COM7"
+	}
+}
