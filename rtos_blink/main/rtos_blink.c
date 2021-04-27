@@ -7,7 +7,7 @@
 #include "stdlib.h"
 #include <string.h>
 
-#define LED 4
+#define LED 2
 
 static TaskHandle_t task1 = NULL;
 static TaskHandle_t task2 = NULL;

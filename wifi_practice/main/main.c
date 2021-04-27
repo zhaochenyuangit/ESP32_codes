@@ -52,8 +52,8 @@ void how2startwifi(void)
     /*2. wifi config*/
     wifi_config_t wifi_cfg = {
         .sta = {
-            .ssid = "Racoon&Masters",
-            .password = "gotomunich2019",
+            .ssid = "CAPS",
+            .password = "caps!schulz-wifi",
             .threshold.authmode = WIFI_AUTH_WPA2_PSK,
             .pmf_cfg = {
                 .capable = true,

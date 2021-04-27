@@ -7,9 +7,6 @@
 			"path": "..\\esp-idf\\examples\\peripherals\\i2c\\i2c_tools"
 		},
 		{
-			"path": "..\\infrared_camera"
-		},
-		{
 			"path": "E:\\TU München\\Masterarbeit\\手册\\grid-eye_api_v2.1"
 		},
 		{
@@ -17,6 +14,9 @@
 		},
 		{
 			"path": "..\\esp-idf\\examples\\protocols\\mqtt\\tcp"
+		},
+		{
+			"path": "..\\esp-idf\\examples"
 		}
 	],
 	"settings": {
@@ -58,7 +58,9 @@
 				"network_common.h": "c",
 				"stddef.h": "c",
 				"stdlib.h": "c",
-				"time.h": "c"
+				"time.h": "c",
+				"esp_timer.h": "c",
+				"rtc_io.h": "c"
 			},
 			"idf.portWin": "COM7"
 	}
