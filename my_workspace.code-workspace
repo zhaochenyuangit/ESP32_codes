@@ -10,12 +10,6 @@
 			"path": "E:\\TU München\\Masterarbeit\\手册\\grid-eye_api_v2.1"
 		},
 		{
-			"path": "..\\esp-idf\\examples\\wifi\\getting_started\\station"
-		},
-		{
-			"path": "..\\esp-idf\\examples\\protocols\\mqtt\\tcp"
-		},
-		{
 			"path": "..\\esp-idf\\examples"
 		}
 	],
@@ -23,7 +17,7 @@
 		"terminal.integrated.shell.windows": "cmd.exe",
 		"terminal.integrated.shellArgs.windows": [
 				"/k",
-				"D:/esp/esp-idf/export.bat"
+				"E:/esp/esp-idf/export.bat"
 			],
 			"files.associations": {
 				"sdkconfig.h": "c",

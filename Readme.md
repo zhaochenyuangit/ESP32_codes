@@ -432,7 +432,151 @@ wifi建立步骤：
 
 #### UART
 
-[文档](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/uart.html)
+[UART文档](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/uart.html)
+
+[UART-to-standard IO stream](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/storage/vfs.html#standard-io-streams-stdin-stdout-stderr)
+
+| 默认引脚 | Tx   | Rx   | 默认波特率 |
+| -------- | ---- | ---- | ---------- |
+| uart 0   | 1    | 3    | 115200     |
+| uart 1   | 10   | 9    |            |
+| uart 2   | 17   | 16   |            |
+
+大部分开发板上，USB都和UART0相连。剩下的两个UART可以自由配置引脚（任何GPIO口），不必用默认引脚。比如，有的开发板上没有9,10引脚，并不意味着uart1不能用，只是要换个引脚。
+
+通常，UART只需要两个引脚，即TX与RX。RTS\CTS 引脚用于flow control, 使接收端能够根据信息接收情况，控制发送端速度，避免发送端太快以至于丢失信息。[uart中的rts/cts是什么](https://www.silabs.com/documents/public/application-notes/an0059.0-uart-flow-control.pdf)
+
+具体步骤：
+
+1. 安装驱动。若指定了队列把手，就会发送uart事件 uart_event_t到该队列，包含了一些debug信息。如果没有指定队列来接收就是放弃了这些信息，对意外情况是一无所知。
+
+```C
+static QueueHandle_t uart0_queue;
+uart_driver_install(EX_UART_NUM,	//uart_num_0/1/2
+                    BUF_SIZE * 2, 	//rx缓存
+                    BUF_SIZE * 2, 	//tx缓存
+                    20, 			//队列长度
+                    &uart0_queue,	//队列把手的指针，也可以是NULL
+                    0);				//不知道
+```
+
+事件
+
+```C
+typedef enum {
+    UART_DATA,              /*!< 是否有新数据*/
+    UART_BREAK,             /*!< UART break event*/
+    UART_BUFFER_FULL,       /*!< UART RX buffer full event*/
+    UART_FIFO_OVF,          /*!< UART FIFO overflow event*/
+    UART_FRAME_ERR,         /*!< UART RX frame error event*/
+    UART_PARITY_ERR,        /*!< UART RX parity event*/
+    UART_DATA_BREAK,        /*!< UART TX data and break event*/
+    UART_PATTERN_DET,       /*!< 检测到特定字符（或字符序列） */
+    UART_EVENT_MAX,         /*!< UART event max index*/
+} uart_event_type_t;
+
+typedef struct {
+    uart_event_type_t type; /*!< 上述事件类型中的一个 */
+    size_t size;            /*!< UART_DATA事件中，新数据字节数*/
+    bool timeout_flag;      /*!< 没有新数据*/                       
+} uart_event_t;
+```
+
+2. 设置波特率、引脚等……
+
+```C
+uart_config_t uart_config = {
+        .baud_rate = 115200,
+        .data_bits = UART_DATA_8_BITS,
+        .parity = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+        .source_clk = UART_SCLK_APB,
+    };
+uart_param_config(EX_UART_NUM, &uart_config);
+uart_set_pin(EX_UART_NUM, 
+             UART_PIN_NO_CHANGE, //tx
+             UART_PIN_NO_CHANGE, //rx
+             UART_PIN_NO_CHANGE, //rts
+             UART_PIN_NO_CHANGE);//cts
+```
+
+3. 从缓存读取指定长度字节。这种方法不能根据末尾标识符来决定是否是一串完整的数据，除非一个一个读直到读到`'\n'`，比较傻。
+
+```C
+uint8_t* buf = (uint8_t*) malloc(READ_BUF_SIZE);
+int buffered_size;
+while(1){
+    memset(buf, 0, READ_BUF_SIZE);
+    uart_get_buffered_data_len(EX_UART_NUM, &buffered_size); //缓存中有多少数据?
+    uart_read_bytes(EX_UART_NUM, buf, buffered_size, portMAX_DELAY);//读取到buf中
+    /** buffered_size 也可以换成任意数字，比如10就是读10个字节
+    	设置等待时间为max_dalay后，读不满指定数量就会一直等待;
+    	否则就是等待一段时间，有多少就读多少
+    */
+    uart_write_bytes(EX_UART_NUM, (const char*) buf, buffered_size);//打印到串口
+}
+
+```
+
+5. 根据内容决定是否读取缓冲。
+
+   * 设置是否检测特定字符。uart在检测到特定字符（如'\n'）后会产生一个中断，发送UART_PATTERN_DET事件，可以用来读取一整行数据。
+
+     ```C
+     // UART以一串 连续、相同 的字符为同步信号
+     #define PATTERN_CHR_NUM    (1) 
+     //Set uart pattern detect function.
+     uart_enable_pattern_det_baud_intr
+         (EX_UART_NUM,
+          '\n',			   //要检测的特定字符
+          PATTERN_CHR_NUM, //一串中有几个
+          9,//连续特定字符最大间隔，大于此间隔认为是不相关的两个字符
+          0,//检测到一个特定字符后，到再次检测之间的时间。
+          0);//从启动到第一次检测之间的时间
+     //Reset the pattern queue length to record at most 20 pattern positions.
+     uart_pattern_queue_reset(EX_UART_NUM, 20);
+     ```
+
+   * pattern detected事件会将检测到的pattern字符的位置存到一个pattern queue中，因此读取pattern字符的位置就知道是否出现了一整条信息，而且能够方便读取。
+
+     >  The following APIs will modify the pattern position info: uart_flush_input, uart_read_bytes, uart_driver_delete, uart_pop_pattern_pos. It is the  application’s responsibility to ensure atomic access to the pattern  queue and the rx data buffer when using pattern detect feature. 
+
+     ```c
+     while(1){
+         if(xQueueReceive(uart0_queue, (void * )&event, portMAX_DELAY)) {
+             memset(buf, 0 , READ_BUF_SIZE);
+             switch(event.type) {
+                    	case UART_PATTERN_DET:
+                     	/*读取pattern字符位置，-1为没找到*/
+                         int pos = uart_pattern_pop_pos(EX_UART_NUM);
+                     	if (pos == -1){
+                             uart_flush_input(EX_UART_NUM);
+                         	break;
+                         }
+                     	/*读取数据内容*/
+                         uart_read_bytes(EX_UART_NUM, 
+                                         buf, 
+                                         pos, 
+                                         100 / portTICK_PERIOD_MS);
+                     	/*数据之后的N个字符就是pattern字符*/
+                         uint8_t pat[PATTERN_CHR_NUM + 1];
+                         memset(pat, 0, sizeof(pat));
+                         uart_read_bytes(EX_UART_NUM, 
+                                         pat, 
+                                         PATTERN_CHR_NUM, 
+                                         100 / portTICK_PERIOD_MS);
+                         printf("received data: %s\n",dtmp);
+                         break;
+                     default:
+                         ESP_LOGI(TAG, "uart event type: %d", event.type);
+                         break;
+             }
+         }
+     }
+     ```
+
+     
 
 ## C语言知识
 
