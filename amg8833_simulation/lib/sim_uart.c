@@ -1,42 +1,43 @@
-/* UART Events Example
-
-   This example code is in the Public Domain (or CC0 licensed, at your option.)
-
-   Unless required by applicable law or agreed to in writing, this
-   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied.
-*/
-#include <stdio.h>
-#include <string.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/queue.h"
-#include "driver/uart.h"
-#include "esp_log.h"
+#include "sim_uart.h"
+#include "grideye_api_common.h"
 
 static const char *TAG = "uart_events";
-
-/**
- * This example shows how to use the UART driver to handle special UART events.
- *
- * It also reads data from UART0 directly, and echoes it to console.
- *
- * - Port: UART0
- * - Receive (Rx) buffer: on
- * - Transmit (Tx) buffer: off
- * - Flow control: off
- * - Event queue: on
- * - Pin assignment: TxD (default), RxD (default)
- */
-
-#define EX_UART_NUM UART_NUM_0
 static const int uart_buf_size = 1024;
 static QueueHandle_t uart0_queue;
 
-static void uart_event_task(void *pvParameters)
+static void parse_csv_to_array(uint8_t *buf, short *array, int size)
 {
+    char string[uart_buf_size];
+    memcpy(string, buf, size);
+    string[size] = '\0';
+    int total_length = strlen(string);
+
+    int processed_num;
+    short value;
+    int index_str = 0;
+    int index_ar = 0;
+
+    while (index_str < total_length)
+    {
+        int ret = sscanf(string + index_str, "%hd%n", &value, &processed_num);
+        assert(ret == 1);
+        array[index_ar] = value;
+        index_ar++;
+        index_str += processed_num + 1; //plus 1 to skip comma
+    }
+}
+
+void uart_event_task(void *pixel_queue)
+{
+    pixel_queue = (QueueHandle_t)pixel_queue;
     uart_event_t event;
     uint8_t *read_buf = (uint8_t *)malloc(uart_buf_size);
+    short pixel_array[SNR_SZ];
+    for (int i = 0; i < SNR_SZ; i++)
+    {
+        pixel_array[i] = 0;
+    }
+    pixel_array[0] = 12345;
     while (1)
     {
         if (xQueueReceive(uart0_queue, (void *)&event, (portTickType)portMAX_DELAY))
@@ -53,17 +54,23 @@ static void uart_event_task(void *pvParameters)
                 }
                 else
                 {
-                    uart_read_bytes(EX_UART_NUM, read_buf, pos, pdMS_TO_TICKS(100));
-                    uint8_t pat[2];
-                    memset(pat, 0, sizeof(pat));
-                    uart_read_bytes(EX_UART_NUM, pat, 1, pdMS_TO_TICKS(100));
+                    uart_read_bytes(EX_UART_NUM, read_buf, pos + 1, pdMS_TO_TICKS(100));
                     printf("received data: %s\n", read_buf);
+                    parse_csv_to_array(read_buf, pixel_array, pos);
+                    if (xQueueSend(pixel_queue, &pixel_array, 10) != pdTRUE)
+                    {
+                        ESP_LOGE(TAG, "queue is full!");
+                    }
                 }
                 break;
             //Others
             default:
                 ESP_LOGI(TAG, "uart event type: %d", event.type);
                 break;
+            }
+            if (uxTaskGetStackHighWaterMark(NULL) < 500)
+            {
+                ESP_LOGW(TAG, "high watermark %d", uxTaskGetStackHighWaterMark(NULL));
             }
         }
     }
@@ -72,7 +79,7 @@ static void uart_event_task(void *pvParameters)
     vTaskDelete(NULL);
 }
 
-static void uart_init(void)
+void uart_init(void)
 {
     /* Configure parameters of an UART driver,
      * communication pins and install the driver */
@@ -97,11 +104,4 @@ static void uart_init(void)
     uart_enable_pattern_det_baud_intr(EX_UART_NUM, '\n', 1, 9, 0, 0);
     //Reset the pattern queue length to record at most 20 pattern positions.
     uart_pattern_queue_reset(EX_UART_NUM, 20);
-}
-
-void app_main(void)
-{
-    uart_init();
-    //Create a task to handler UART event from ISR
-    xTaskCreate(uart_event_task, "uart_event_task", 2048, NULL, 12, NULL);
 }

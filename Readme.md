@@ -621,6 +621,21 @@ printf("%d\n",num);
    }
    ```
 
+5. `sscanf` 从字符串找值赋给变量 [文档](https://en.cppreference.com/w/c/io/fscanf)
+
+   > %h代表半，%u代表unsigned int。如%hu 就是unsigned short
+   >
+   > 值得一提的还有%n，可以将本次读取的字符量赋给一个变量，本身不计数
+
+   ```C
+   /*读取一个整形数字到i，并将读取了多少字符数据的信息给pos*/
+   assert(sscanf(s, "%d%n", &i, &pos) == 1);
+   /*pos可以用于接下来的读取*/
+   sscanf(s+pos,"%d",&j);
+   ```
+
+   
+
 #### 指针的指针
 
 有用的[blog](https://www.yanbinghu.com/2019/06/20/53981.html)
