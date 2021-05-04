@@ -54,7 +54,9 @@
 				"stdlib.h": "c",
 				"time.h": "c",
 				"esp_timer.h": "c",
-				"rtc_io.h": "c"
+				"rtc_io.h": "c",
+				"math.h": "c",
+				"random": "c"
 			},
 			"idf.portWin": "COM7"
 	}
