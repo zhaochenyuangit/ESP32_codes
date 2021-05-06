@@ -94,10 +94,9 @@ void app_main(void)
     struct timeval tok;
     int eclipsed_time_ms;
 
-    struct Filter *g1 = gaussian_kernel(1);
-    struct Filter *g3 = gaussian_kernel(3);
-    struct Filter *g5 = gaussian_kernel(5);
-    if ((g3 == NULL) || (g5 == NULL))
+    struct Filter *g3 = gkern_1d(3);
+
+    if ((g3 == NULL))
     {
         ESP_LOGW(TAG, "alloc failed");
     }
@@ -109,7 +108,7 @@ void app_main(void)
     printf("eclipsed time: %d ms\n", eclipsed_time_ms);
 
     gettimeofday(&tik, NULL); /*performance evaluation*/
-    discrete_convolution_2d(image71, image_holder1, w, h, g3, 1);
+    //discrete_convolution_2d(image71, image_holder1, w, h, g3, 1);
     gettimeofday(&tok, NULL); /*performance evaluation*/
     eclipsed_time_ms = (tok.tv_sec - tik.tv_sec) * 1000 + (tok.tv_usec - tik.tv_usec) / 1000;
     printf("eclipsed time: %d ms\n", eclipsed_time_ms);
@@ -120,20 +119,7 @@ void app_main(void)
     eclipsed_time_ms = (tok.tv_sec - tik.tv_sec) * 1000 + (tok.tv_usec - tik.tv_usec) / 1000;
     printf("eclipsed time: %d ms\n", eclipsed_time_ms);
 
-    gettimeofday(&tik, NULL); /*performance evaluation*/
-    int max = max_of_array(image_holder2, len_image);
-    int std = std_of_array(image_holder2, len_image);
-    short th = (max - 3 * std) > 0 ? (max - 3 * std) : 0;
-    gettimeofday(&tok, NULL); /*performance evaluation*/
-    eclipsed_time_ms = (tok.tv_sec - tik.tv_sec) * 1000 + (tok.tv_usec - tik.tv_usec) / 1000;
-    printf("eclipsed time: %d ms\n", eclipsed_time_ms);
-
-    //thresholding(image_holder2, image_holder1, len_image, &th, 1, 0);
-    gettimeofday(&tik, NULL); /*performance evaluation*/
-    pooling_2d(image_holder1, image_holder2, w, h, g1, max_of_array, 1);
-    gettimeofday(&tok, NULL); /*performance evaluation*/
-    eclipsed_time_ms = (tok.tv_sec - tik.tv_sec) * 1000 + (tok.tv_usec - tik.tv_usec) / 1000;
-    printf("eclipsed time: %d ms\n", eclipsed_time_ms);
+    
 
     //pooling_2d(image_holder2, image_holder1, w, h, &mean10, min_of_array, 1);
     //discrete_convolution_2d(image_holder1, image_holder2, w, h, g3, 1);

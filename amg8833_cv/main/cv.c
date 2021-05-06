@@ -6,7 +6,7 @@ struct Filter
 {
     int *kernel;
     int side;
-    int weight;
+    int *weight;
 };
 
 struct Filter *gaussian_kernel_2d(double sigma)
@@ -46,7 +46,7 @@ struct Filter *gaussian_kernel_2d(double sigma)
     }
     f->side = l;
     f->kernel = kernel;
-    f->weight = sum;
+    f->weight = NULL;
     return f;
 }
 
@@ -69,18 +69,36 @@ struct Filter *gkern_1d(double sigma)
         free(f);
         return NULL;
     }
+    int *weight = malloc(sizeof(int) * l);
+    if (weight == NULL)
+    {
+        free(kernel);
+        free(f);
+        return NULL;
+    }
     double sigma2 = sigma * sigma;
+    int double_to_int_factor = 4 * radius;
     for (int x = -radius; x <= radius; x++)
     {
         int ref = x + radius;
         double value = exp(-0.5 * (x * x) / sigma2);
-        value *= 4*radius;
+        value *= double_to_int_factor;
         kernel[ref] = round(value);
     }
-
+    for (int i = 0; i <= radius; i++)
+    {
+        int weight_sum = 0;
+        for (int x = 0; x <= radius + i; x++)
+        {
+            weight_sum += kernel[x];
+        }
+        weight[i] = weight_sum;
+        weight[2 * radius - i] = weight_sum;
+    }
     f->side = l;
     f->kernel = kernel;
-    f->weight = 1;
+    f->weight = weight;
+    return f;
 }
 
 struct Filter mean10 = {
@@ -95,18 +113,9 @@ struct Filter mean10 = {
                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    .weight = 100,
+    .weight = NULL,
 };
 
-struct Filter g1_manual = {
-    .side = 5,
-    .kernel = (int[]){1, 4, 7, 4, 1,
-                      4, 16, 26, 16, 4,
-                      7, 26, 41, 26, 7,
-                      4, 16, 26, 16, 4,
-                      1, 4, 7, 4, 1},
-    .weight = 273,
-};
 typedef int (*pool_function_t)(short[], int);
 
 int max_of_array(short *array, int size)
