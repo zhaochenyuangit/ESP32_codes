@@ -9,7 +9,7 @@ struct Filter
     int weight;
 };
 
-struct Filter *gaussian_kernel(double sigma)
+struct Filter *gaussian_kernel_2d(double sigma)
 {
     struct Filter *f = malloc(sizeof(struct Filter));
     if (f == NULL)
@@ -48,6 +48,39 @@ struct Filter *gaussian_kernel(double sigma)
     f->kernel = kernel;
     f->weight = sum;
     return f;
+}
+
+struct Filter *gkern_1d(double sigma)
+{
+    struct Filter *f = malloc(sizeof(struct Filter));
+    if (f == NULL)
+    {
+        return NULL;
+    }
+    int l = round(2 * 3 * sigma);
+    if (l % 2 == 0)
+    {
+        l = l - 1;
+    }
+    int radius = (l - 1) / 2;
+    int *kernel = malloc(sizeof(int) * l);
+    if (kernel == NULL)
+    {
+        free(f);
+        return NULL;
+    }
+    double sigma2 = sigma * sigma;
+    for (int x = -radius; x <= radius; x++)
+    {
+        int ref = x + radius;
+        double value = exp(-0.5 * (x * x) / sigma2);
+        value *= 4*radius;
+        kernel[ref] = round(value);
+    }
+
+    f->side = l;
+    f->kernel = kernel;
+    f->weight = 1;
 }
 
 struct Filter mean10 = {
@@ -177,14 +210,14 @@ void interpolation71x71(short *input8x8, short *output71x71)
     }
 }
 
-void discrete_convolution_2d(short *image, short *output, int image_width, int image_height, struct Filter filter, int step)
+void discrete_convolution_2d(short *image, short *output, int image_width, int image_height, struct Filter *filter, int step)
 {
     assert(((image_width - 1) / step) % 1 == 0);
     assert(((image_height - 1) / step) % 1 == 0);
 
     int output_index = 0;
-    int radius = (filter.side - 1) / 2;
-    int center = radius * filter.side + radius;
+    int radius = (filter->side - 1) / 2;
+    int center = radius * filter->side + radius;
     for (int row = 0; row < image_height; row += step)
     {
         for (int col = 0; col < image_width; col += step)
@@ -192,23 +225,23 @@ void discrete_convolution_2d(short *image, short *output, int image_width, int i
             int index = row * image_width + col;
             unsigned int intermediate_sum = 0;
             int weight = 0;
-            for (int ref = 0; ref < (filter.side * filter.side); ref++)
+            for (int ref = 0; ref < (filter->side * filter->side); ref++)
             {
                 /*if (filter.kernel[ref] == 0)
                 {
                     continue;
                 }*/
-                int row_shift = (ref - center) / filter.side;
-                int col_shift = (ref - center) % filter.side;
+                int row_shift = (ref - center) / filter->side;
+                int col_shift = (ref - center) % filter->side;
                 if (col_shift < -radius)
                 {
                     row_shift = row_shift - 1;
-                    col_shift = col_shift + filter.side;
+                    col_shift = col_shift + filter->side;
                 }
                 else if (col_shift > radius)
                 {
                     row_shift = row_shift + 1;
-                    col_shift = col_shift - filter.side;
+                    col_shift = col_shift - filter->side;
                 }
                 bool out_of_bondary;
                 out_of_bondary = ((row + row_shift) < 0) ||
@@ -220,8 +253,8 @@ void discrete_convolution_2d(short *image, short *output, int image_width, int i
                     continue;
                 }
                 int index_shift = row_shift * image_width + col_shift;
-                intermediate_sum += image[index + index_shift] * filter.kernel[ref];
-                weight += filter.kernel[ref];
+                intermediate_sum += image[index + index_shift] * filter->kernel[ref];
+                weight += filter->kernel[ref];
             }
             intermediate_sum /= weight;
             output[output_index] = intermediate_sum;
