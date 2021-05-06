@@ -17,19 +17,18 @@
 #include "cv.c"
 #include "dummy.c"
 
+#define IM_H (71)
+#define IM_W (71)
+#define IM_LEN (IM_H * IM_W)
 static const char *TAG = "debug";
 esp_mqtt_client_handle_t client;
 static xQueueHandle q71 = NULL;
 
-enum
-{
-    len_image = 15 * 15
-};
-const int w = 15, h = 15;
-short image71[len_image];
-short image_holder1[len_image];
-short image_holder2[len_image];
-short thres_holder[len_image];
+short image_origin[IM_LEN];
+short image_holder1[IM_LEN];
+short image_holder2[IM_LEN];
+short image_holder3[IM_LEN];
+short thres_holder[IM_LEN];
 
 void array_to_string_71(short *raw_temp, char *buf)
 {
@@ -47,7 +46,6 @@ void array_to_string_71(short *raw_temp, char *buf)
         }
     }
 }
-
 void print_pixels_to_serial_8x8(short *raw_temp, bool print_float)
 {
     printf("[\n");
@@ -70,8 +68,7 @@ void print_pixels_to_serial_8x8(short *raw_temp, bool print_float)
     }
     printf("\n");
 }
-
-void debug_mqtt(void *_)
+void debug_mqtt(void *q71)
 {
     short image71[71 * 71];
     char topic[] = "amg8833/image71";
@@ -87,46 +84,41 @@ void debug_mqtt(void *_)
         vTaskDelay(pdMS_TO_TICKS(2000));
     }
 }
-
 void app_main(void)
 {
-    struct timeval tik;
-    struct timeval tok;
-    int eclipsed_time_ms;
+    struct Filter *g31d = gkern_1d(12);
+    struct Filter *g32d = gaussian_kernel_2d(12);
 
-    struct Filter *g3 = gkern_1d(3);
-
-    if ((g3 == NULL))
+    if ((g31d == NULL))
     {
         ESP_LOGW(TAG, "alloc failed");
     }
 
-    gettimeofday(&tik, NULL); /*performance evaluation*/
-    interpolation71x71(dummy_event, image71);
-    gettimeofday(&tok, NULL); /*performance evaluation*/
-    eclipsed_time_ms = (tok.tv_sec - tik.tv_sec) * 1000 + (tok.tv_usec - tik.tv_usec) / 1000;
-    printf("eclipsed time: %d ms\n", eclipsed_time_ms);
+    performance_evaluation(0);
+    interpolation71x71(dummy_event, image_origin);
+    printf("interpolation: %d ms\n", performance_evaluation(1));
 
-    gettimeofday(&tik, NULL); /*performance evaluation*/
-    //discrete_convolution_2d(image71, image_holder1, w, h, g3, 1);
-    gettimeofday(&tok, NULL); /*performance evaluation*/
-    eclipsed_time_ms = (tok.tv_sec - tik.tv_sec) * 1000 + (tok.tv_usec - tik.tv_usec) / 1000;
-    printf("eclipsed time: %d ms\n", eclipsed_time_ms);
+    performance_evaluation(0);
+    discrete_convolution_2d(image_origin, image_holder3, IM_W, IM_H, g32d, 1);
+    printf("2d gauss: %d ms\n", performance_evaluation(1));
 
-    gettimeofday(&tik, NULL); /*performance evaluation*/
-    thresholding(image71, image_holder2, len_image, image_holder1, 0, 0);
-    gettimeofday(&tok, NULL); /*performance evaluation*/
-    eclipsed_time_ms = (tok.tv_sec - tik.tv_sec) * 1000 + (tok.tv_usec - tik.tv_usec) / 1000;
-    printf("eclipsed time: %d ms\n", eclipsed_time_ms);
+    performance_evaluation(0);
+    convolution_x(image_origin, image_holder1, IM_W, IM_H, g31d);
+    convolution_y(image_holder1, image_holder2, IM_W, IM_H, g31d);
+    printf("1d gauss: %d ms\n", performance_evaluation(1));
 
-    
-
-    //pooling_2d(image_holder2, image_holder1, w, h, &mean10, min_of_array, 1);
-    //discrete_convolution_2d(image_holder1, image_holder2, w, h, g3, 1);
-    //thresholding(image_holder2, image_holder1, len_image, &th, 1, 1);
-    //pooling_2d(image_holder1, image_holder2, w, h, &mean10, min_of_array, 1);
-    //pooling_2d(image_holder2, image_holder1, w, h, &mean10, max_of_array, 1);
-    //pooling_2d(sample_out, dummy_out, w, h, &mean10, max_of_array, 1);
+    for (int i = 0; i < IM_H; i++)
+    {
+        for (int j = 0; j < IM_W; j++)
+        {
+            int index = i * IM_W + j;
+            int diff = image_holder2[index] - image_holder3[index];
+            if (abs(diff) > 5)
+            {
+                printf("%d,%d,diff is %d\n", i, j, diff);
+            }
+        }
+    }
 
     //print_pixels_to_serial_8x8(sample_out, false);
 }
@@ -141,30 +133,3 @@ void app_main(void)
     }*/
 
 //xTaskCreatePinnedToCore(debug_mqtt, "mqtt", 40000, NULL, 5, NULL, 0);
-//struct Filter *g1 = gaussian_kernel(1);
-//struct Filter *g3 = gaussian_kernel(3);
-//struct Filter *g12 = gaussian_kernel(12);
-/*if ((g3 == NULL) || (g12 == NULL))
-    {
-        ESP_LOGW(TAG, "alloc failed");
-    }*/
-
-/*
-    thresholding(image71, image_holder2, len_image, image_holder1, 0, 0);
-    int max = max_of_array(image_holder2, len_image);
-    int std = std_of_array(image_holder2, len_image);
-    short th = (max - 3 * std) > 0 ? (max - 3 * std) : 0;
-    thresholding(image_holder2, image_holder1, len_image, &th, 1, 0);
-    pooling_2d(image_holder1, image_holder2, 71, 71, &mean10, max_of_array, 1);
-    pooling_2d(image_holder2, image_holder1, 71, 71, &mean10, min_of_array, 1);
-    discrete_convolution_2d(image_holder1, image_holder2, 71, 71, g3, 1);
-    thresholding(image_holder2, image_holder1, len_image, &th, 1, 1);
-    pooling_2d(image_holder1, image_holder2, 71, 71, &mean10, min_of_array, 1);
-    pooling_2d(image_holder2, image_holder1, 71, 71, &mean10, max_of_array, 1);
-
-    discrete_convolution_2d(image_holder1, image_holder2, 71, 71, g3, 10);
-    */
-/*if (xQueueSend(q71, &sample_out, 20) == pdFALSE)
-    {
-        ESP_LOGW(TAG, "queue sending failed");
-    }*/

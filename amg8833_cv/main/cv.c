@@ -272,6 +272,74 @@ void discrete_convolution_2d(short *image, short *output, int image_width, int i
     }
 }
 
+void convolution_x(short *image, short *output, int image_width, int image_height, struct Filter *f1d)
+{
+    int radius = (f1d->side - 1) / 2;
+    for (int row = 0; row < image_height; row++)
+    {
+        for (int col = 0; col < image_width; col++)
+        {
+            int index  = row * image_width + col;
+            unsigned int result = 0;
+            for (int x = -radius; x <= radius; x++)
+            {
+                bool out_of_boundary = ((col + x) < 0) || ((col + x) >= image_width);
+                if (out_of_boundary)
+                    continue;
+                result += image[index + x] * f1d->kernel[x + radius];
+            }
+            if (col < radius)
+            {
+                result /= f1d->weight[col];
+            }
+            else if (col > (image_width - radius - 1))
+            {
+                result /= f1d->weight[image_width - col - 1];
+            }
+            else
+            {
+                result /= f1d->weight[radius];
+            }
+
+            output[index] = result;
+        }
+    }
+}
+
+void convolution_y(short *image, short *output, int image_width, int image_height, struct Filter *f1d)
+{
+    int radius = (f1d->side - 1) / 2;
+    for (int row = 0; row < image_height; row++)
+    {
+        for (int col = 0; col < image_width; col++)
+        {
+            int index = row * image_width + col;
+            unsigned int result = 0;
+            for (int x = -radius; x <= radius; x++)
+            {
+                bool out_of_boundary = ((row + x) < 0) || ((row + x) >= image_height);
+                if (out_of_boundary)
+                    continue;
+                result += image[index + x * image_width] * f1d->kernel[x + radius];
+            }
+            if (row < radius)
+            {
+                result /= f1d->weight[row];
+            }
+            else if (row > (image_height - radius - 1))
+            {
+                result /= f1d->weight[image_height - row - 1];
+            }
+            else
+            {
+                result /= f1d->weight[radius];
+            }
+
+            output[index] = result;
+        }
+    }
+}
+
 void pooling_2d(short *image, short *output, int image_width, int image_height, struct Filter *mask, pool_function_t fun, int step)
 {
     assert(((image_width - 1) / step) % 1 == 0);

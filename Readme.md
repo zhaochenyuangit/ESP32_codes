@@ -722,3 +722,9 @@ blob: binary large object, 是一些连续的像素点的集群
 
 形态学处理，dilation和erosion [blog](https://blog.csdn.net/wsp_1138886114/article/details/82917661)
 
+#### 移植到C语言
+
+[快速高斯的几种方法](https://scicomp.stackexchange.com/questions/10356/computational-complexity-of-2d-convolution)
+
+[快速区域求和](https://en.wikipedia.org/wiki/Summed-area_table#The_algorithm)
+
