@@ -463,17 +463,17 @@ void average_of_area(unsigned int *sum_table, short *output, int image_width,int
     }
     int radius = (side-1)/2;
     for(int row=0;row<image_height;row++){
-        int north = (row - radius)<0? 0: (row-radius);
+        int north = (row - radius-1)<0?-1:(row-radius-1);
         int south = (row + radius)>=image_height? (image_height-1): (row+radius);
         for(int col=0;col<image_width;col++){
-            int west = (col - radius)<0?0:(col-radius);
+            int west = (col - radius-1)<0?-1:(col-radius-1);
             int east = (col + radius)>=image_width? (image_width-1):(col+radius);
-            int index_nw = north*image_width + west;
-            int index_ne = north*image_width + east;
-            int index_sw = south*image_width + west;
-            int index_se = south*image_width + east;
-            int avg = sum_table[index_se] - sum_table[index_sw]\
-                     - sum_table[index_ne] + sum_table[index_nw];
+
+            unsigned int nw = ((north<0)||(west<0))?0:sum_table[north*image_width + west];
+            unsigned int ne = (north<0)?0:sum_table[north*image_width + east];
+            unsigned int sw = (west<0)?0:sum_table[south*image_width + west];
+            unsigned int se = sum_table[south*image_width + east];
+            unsigned int avg = se - sw - ne + nw;
             avg /= (south-north) * (east-west);
             output[row*image_width+col] = avg;
         }
