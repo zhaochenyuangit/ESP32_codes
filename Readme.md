@@ -724,6 +724,8 @@ blob: binary large object, 是一些连续的像素点的集群
 
 #### 移植到C语言
 
+[快速高斯博文](https://rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/)
+
 [快速高斯的几种方法](https://scicomp.stackexchange.com/questions/10356/computational-complexity-of-2d-convolution)
 
 [快速区域求和](https://en.wikipedia.org/wiki/Summed-area_table#The_algorithm)

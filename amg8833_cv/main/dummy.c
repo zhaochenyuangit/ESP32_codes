@@ -11,13 +11,13 @@ short dummy_event[] = {4672, 4544, 4672, 4544, 4672, 4864, 4864, 4992,
                        4736, 4800, 4800, 4800, 4736, 4864, 4736, 4992};
 
 /*0 is start, 1 is end*/
-int performance_evaluation(int start_or_end)
+double performance_evaluation(int start_or_end)
 {
     static struct timeval tik, tok;
     if (start_or_end)
     {
         gettimeofday(&tok, NULL);
-        int eclipsed_time_ms = (tok.tv_sec - tik.tv_sec) * 1000 + (tok.tv_usec - tik.tv_usec) / 1000;
+        double eclipsed_time_ms = (tok.tv_sec - tik.tv_sec) * 1000 + (tok.tv_usec - tik.tv_usec) / 1000.0;
         return eclipsed_time_ms;
     }
     else

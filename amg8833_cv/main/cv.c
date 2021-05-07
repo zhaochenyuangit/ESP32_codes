@@ -1,13 +1,6 @@
-#include "grideye_api_common.h"
-#include "freertos/FreeRTOS.h"
-#include "math.h"
+#include "cv.h"
 
-struct Filter
-{
-    int *kernel;
-    int side;
-    int *weight;
-};
+static const char *TAG = "CV";
 
 struct Filter *gaussian_kernel_2d(double sigma)
 {
@@ -101,22 +94,38 @@ struct Filter *gkern_1d(double sigma)
     return f;
 }
 
-struct Filter mean10 = {
-    .side = 10,
-    .kernel = (int[100]){1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                         1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                         1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                         1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                         1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                         1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                         1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                         1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                         1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                         1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    .weight = NULL,
-};
-
-typedef int (*pool_function_t)(short[], int);
+struct Filter *avg_kern1d(int side){
+    if(side%2==0){
+        side = side-1;
+        ESP_LOGW(TAG,"update avg kernel side to %d",side);
+    }
+    struct Filter *f =malloc(sizeof(struct Filter));
+    if(f==NULL){
+        return NULL;
+    }
+    int *vec = malloc(sizeof(int)*side);
+    if(vec ==NULL){
+        free(f);
+        return NULL;
+    }
+    int *weight = malloc(sizeof(int)*side);
+    if(weight ==NULL){
+        free(f);
+        free(vec);
+        return NULL;
+    }
+    int radius = (side-1)/2;
+    for(int i=0;i<=radius;i++){
+        vec[i] =1;
+        vec[2*radius-i] = 1;
+        weight[i] = radius+i+1;
+        weight[2*radius-i] = radius+i+1;
+    }
+    f->side = side;
+    f->kernel = vec;
+    f->weight = weight;
+    return f;
+}
 
 int max_of_array(short *array, int size)
 {
@@ -422,6 +431,51 @@ void thresholding(short *image, short *output, int image_size, short *threshold,
         for (int index = 0; index < image_size; index++)
         {
             output[index] = (output[index] != 0);
+        }
+    }
+}
+
+void summed_area_table(short *image, unsigned int *output, int image_width, int image_height)
+{
+    output[0] = image[0];
+    for(int col = 1;col<image_width;col++){
+        output[col] = image[col] + output[col-1]; 
+    }
+    for(int row=1;row<image_height;row++){
+        output[row*image_width] = image[row*image_width] + output[(row-1)*image_width];
+    }
+    for(int row =1;row<image_height;row++){
+        for(int col=1;col<image_width;col++){
+            int index = row*image_width + col;
+            int left = index -1;
+            int up = index-image_width;
+            int upleft = up -1;
+            output[index] = image[index] + output[up] + output[left] - output[upleft]; 
+        }
+    }
+}
+
+void average_of_area(unsigned int *sum_table, short *output, int image_width,int image_height,int side)
+{
+    if(side%2==0){
+        side = side-1;
+        ESP_LOGW(TAG,"avg from sum table, update side to %d",side);
+    }
+    int radius = (side-1)/2;
+    for(int row=0;row<image_height;row++){
+        int north = (row - radius)<0? 0: (row-radius);
+        int south = (row + radius)>=image_height? (image_height-1): (row+radius);
+        for(int col=0;col<image_width;col++){
+            int west = (col - radius)<0?0:(col-radius);
+            int east = (col + radius)>=image_width? (image_width-1):(col+radius);
+            int index_nw = north*image_width + west;
+            int index_ne = north*image_width + east;
+            int index_sw = south*image_width + west;
+            int index_se = south*image_width + east;
+            int avg = sum_table[index_se] - sum_table[index_sw]\
+                     - sum_table[index_ne] + sum_table[index_nw];
+            avg /= (south-north) * (east-west);
+            output[row*image_width+col] = avg;
         }
     }
 }
