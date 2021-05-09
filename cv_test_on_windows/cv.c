@@ -1,7 +1,7 @@
 #include "cv.h"
-
-static const char *TAG = "CV";
-
+#include <stdio.h>
+#include "stdlib.h"
+#include <string.h>
 struct Filter *gaussian_kernel_2d(double sigma)
 {
     struct Filter *f = malloc(sizeof(struct Filter));
@@ -97,7 +97,7 @@ struct Filter *gkern_1d(double sigma)
 struct Filter *avg_kern1d(int side){
     if(side%2==0){
         side = side-1;
-        ESP_LOGW(TAG,"update avg kernel side to %d",side);
+        printf("update avg kernel side to %d\n",side);
     }
     struct Filter *f =malloc(sizeof(struct Filter));
     if(f==NULL){
@@ -459,7 +459,7 @@ void average_of_area(unsigned int *sum_table, short *output, int image_width,int
 {
     if(side%2==0){
         side = side-1;
-        ESP_LOGW(TAG,"avg from sum table, update side to %d",side);
+        printf("avg from sum table, update side to %d\n",side);
     }
     int radius = (side-1)/2;
     for(int row=0;row<image_height;row++){
