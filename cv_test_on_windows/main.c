@@ -22,6 +22,15 @@ short dummy_event[] = {4672, 4544, 4672, 4544, 4672, 4864, 4864, 4992,
                        4672, 5184, 5632, 5952, 6080, 5248, 4992, 4864,
                        4672, 4544, 4864, 4992, 4928, 4864, 4992, 4800,
                        4736, 4800, 4800, 4800, 4736, 4864, 4736, 4992};
+uint8_t dummy_mask[] = {0,0,0,0,0,0,0,0,
+                        0,1,1,1,1,1,1,0,
+                        0,1,0,0,0,0,1,0,
+                        0,1,0,0,0,0,1,0,
+                        0,1,1,0,0,1,1,0,
+                        0,0,1,0,0,1,0,0,
+                        0,0,1,1,0,1,0,0,
+                        0,0,0,0,1,0,0,0};
+
 
 short image_origin[IM_LEN];
 short image_holder1[IM_LEN];
@@ -85,6 +94,26 @@ void print_pixels_to_serial_8x8(short *raw_temp, bool print_float)
     }
     printf("\n");
 }
+void print_mask_to_serial_8x8(uint8_t *mask)
+{
+    printf("[\n");
+    for (int i = 1; i <= 64; i++)
+    {
+        if(mask[i-1]){
+        printf("*  ");
+        }
+        else
+        {printf("-  ");
+        }
+        //if (i != SNR_SZ)
+        //    printf(", ");
+        if (i % 8 == 0 && i != SNR_SZ)
+            printf("\n");
+        if (i % 8 == 0 && i == SNR_SZ)
+            printf("\n]");
+    }
+    printf("\n");
+}
 
 int main(void)
 {
@@ -134,6 +163,13 @@ int main(void)
     summed_area_table(image_origin,sum_table,IM_W,IM_H);
     average_of_area(sum_table,result_tab,IM_W,IM_H,20);
     printf("sum table: %.2f ms\n",performance_evaluation(1));
+
+    uint8_t outmask[IM_LEN];
+    performance_evaluation(0);
+    binary_extract_holes(outmask,outmask,71,71);
+    printf("fill holes: %.2f ms\n",performance_evaluation(1));
+
+    //print_mask_to_serial_8x8(outmask);
 
     /*
     for(int x = 0;x<IM_W;x++){

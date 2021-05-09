@@ -480,10 +480,68 @@ void average_of_area(unsigned int *sum_table, short *output, int image_width,int
     }
 }
 
-void binary_extract_holes(uint8_t *mask, uint8_t *output, int width, int height)
+void binary_extract_holes(uint8_t *mask, uint8_t *outmask, int width, int height)
 {
-    int im_length = width*height;
     int im_addborder_length = (width+2)*(height+2);
     uint8_t holder[im_addborder_length];
+    for(int i =0;i<im_addborder_length;i++){
+        holder[i]=0;
+    }
+    for (int row =0;row<height;row++){
+        for (int col=0;col<width;col++){
+            int index_in_holder = (row+1)*(width+2) + (col+1);
+            holder[index_in_holder] = mask[row*width + col];
+        }
+    }
+    {
+    uint8_t bg_search_list[im_addborder_length];
+    bg_search_list[0] = 0; //set flood seed to upper left corner in padded mask
+    int bg_counted = 0;
+    int bg_tocount = 1;
+    while(bg_counted<bg_tocount){
+        int row = bg_search_list[bg_counted] / (width+2);
+        int col = bg_search_list[bg_counted] % (width+2);
+        if((row-1)>=0){
+            int index_up = (row-1)*(width+2) +col;
+            if(holder[index_up]==0){
+                holder[index_up] = 1;
+                bg_search_list[bg_tocount] = index_up;
+                bg_tocount++;
+            }
+        } 
+        if((row+1)<(height+2)){
+            int index_down = (row+1)*(width+2) +col;
+            if(holder[index_down]==0){
+                holder[index_down]=1;
+                bg_search_list[bg_tocount] = index_down;
+                bg_tocount++;
+            }
+        }
+        if((col-1)>=0){
+            int index_left = row*(width+2) + (col -1);
+            if(holder[index_left]==0){
+                holder[index_left]=1;
+                bg_search_list[bg_tocount] = index_left;
+                bg_tocount++;
+            }
+        }
+        if((col+1)<(width+2)){
+            int index_right = row*(width+2) +(col+1);
+            if(holder[index_right]==0){
+                holder[index_right]=1;
+                bg_search_list[bg_tocount] = index_right;
+                bg_tocount++;
+            }
+        }
+        bg_counted++;
+    }
+    }
+    for(int row=0;row<height;row++){
+        for(int col=0;col<width;col++){
+            int index = row*width + col;
+            int index_in_holder = (row+1)*(width+2) + (col+1);
+            outmask[index] = (holder[index_in_holder] ^ (uint8_t)1)|(mask[index]);
+        }
+    }
 
 }
