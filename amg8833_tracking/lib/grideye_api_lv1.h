@@ -26,7 +26,7 @@ The views and conclusions contained in the software and documentation are those 
 /*******************************************************************************
 	public method definition
 *******************************************************************************/
-BOOL	 bAMG_PUB_I2C_Read( UCHAR, UCHAR, UCHAR, UCHAR* );
+esp_err_t 	bAMG_PUB_I2C_Read( UCHAR, UCHAR, UCHAR, UCHAR* );
 short	shAMG_PUB_TMP_ConvThermistor( UCHAR[2] );
 short	shAMG_PUB_TMP_ConvTemperature( UCHAR[2] );
 void	 vAMG_PUB_TMP_ConvTemperature64( UCHAR*, short* );

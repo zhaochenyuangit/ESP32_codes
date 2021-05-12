@@ -406,7 +406,7 @@ void binary_extract_holes(uint8_t *mask, uint8_t *outmask, int width, int height
         for(int col=0;col<width;col++){
             int index = row*width + col;
             int index_in_holder = (row+1)*(width+2) + (col+1);
-            outmask[index] = (holder[index_in_holder] ^ (uint8_t)1));
+            outmask[index] = (holder[index_in_holder] ^ (uint8_t)1);
         }
     }
     free(holder);

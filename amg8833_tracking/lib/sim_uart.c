@@ -55,7 +55,7 @@ void uart_event_task(void *pixel_queue)
                 else
                 {
                     uart_read_bytes(EX_UART_NUM, read_buf, pos + 1, pdMS_TO_TICKS(100));
-                    printf("received data: %s\n", read_buf);
+                    //printf("received data: %s\n", read_buf);
                     parse_csv_to_array(read_buf, pixel_array, pos);
                     if (xQueueSend(pixel_queue, &pixel_array, 10) != pdTRUE)
                     {
@@ -65,7 +65,7 @@ void uart_event_task(void *pixel_queue)
                 break;
             //Others
             default:
-                ESP_LOGI(TAG, "uart event type: %d", event.type);
+                ESP_LOGD(TAG, "uart event type: %d", event.type);
                 break;
             }
             if (uxTaskGetStackHighWaterMark(NULL) < 500)

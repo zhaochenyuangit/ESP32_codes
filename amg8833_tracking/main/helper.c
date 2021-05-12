@@ -1,7 +1,7 @@
 #include "freertos/FreeRTOS.h"
 #include "grideye_api_common.h"
 #include <string.h>
-void array_to_string(short *raw_temp, char *buf)
+void array8x8_to_string(short *raw_temp, char *buf)
 {
     int index = 0;
     for (int i = 0; i < SNR_SZ; i++)
@@ -16,6 +16,22 @@ void array_to_string(short *raw_temp, char *buf)
             index += sprintf(&buf[index], ",");
         }
     }
+}
+
+int detect_activation(short *pixels, short thms, UCHAR *mask)
+{
+    int count = 0;
+    memset(mask, 0, SNR_SZ);
+    short low_b = thms - 2.5 * 256;
+    for (int i = 0; i < SNR_SZ; i++)
+    {
+        if (pixels[i] > low_b)
+        {
+            mask[i] = pdTRUE;
+            count++;
+        }
+    }
+    return count;
 }
 
 void mask_to_string(UCHAR *mask, char *buf)
@@ -51,18 +67,4 @@ void print_mask(UCHAR *mask)
     printf("\n");
 }
 
-int detect_activation(short *pixels, short thms, UCHAR *mask)
-{
-    int count = 0;
-    memset(mask, 0, SNR_SZ);
-    short low_b = thms - 2.5 * 256;
-    for (int i = 0; i < SNR_SZ; i++)
-    {
-        if (pixels[i] > low_b)
-        {
-            mask[i] = pdTRUE;
-            count++;
-        }
-    }
-    return count;
-}
+

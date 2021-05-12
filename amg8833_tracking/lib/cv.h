@@ -9,6 +9,9 @@ struct Filter
     int side;
     int *weight;
 };
+typedef struct Filter Filter;
+typedef int (*pool_function_t)(short[], int);
+
 /*API functions*/
 int labeling8(uint8_t *mask, int width, int height);
 short *average_filter(short *image,int width, int height, int side);
@@ -16,7 +19,6 @@ void binary_fill_holes(uint8_t *mask,int width, int height);
 short *discrete_convolution_2d_seperable(short *image,int width,int height,Filter *fx, Filter *fy);
 
 /*validation functions*/
-typedef struct Filter Filter;
 struct Filter *gaussian_kernel_2d(double sigma);
 void discrete_convolution_2d(short *image, short *output, int image_width, int image_height, struct Filter *filter, int step);
 void pooling_2d(short *image, short *output, int image_width, int image_height, struct Filter *mask, pool_function_t fun, int step);
@@ -25,7 +27,6 @@ void pooling_2d(short *image, short *output, int image_width, int image_height, 
 struct Filter *gkern_1d(double sigma);
 struct Filter *avg_kern1d(int side);
 
-typedef int (*pool_function_t)(short[], int);
 int max_of_array(short *array, int size);
 int min_of_array(short *array, int size);
 int avg_of_array(short *array, int size);

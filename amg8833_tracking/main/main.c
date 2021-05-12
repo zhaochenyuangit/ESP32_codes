@@ -48,7 +48,7 @@ void pub_msg(void *parameter)
     {
         if (xQueueReceive(q_pixels, &pixel_value, 0) == pdTRUE)
         {
-            array_to_string(pixel_value, pixel_msg_buf);
+            array8x8_to_string(pixel_value, pixel_msg_buf);
             //print_pixels_to_serial(pixel_value, true);
             mqtt_send(client, topic, pixel_msg_buf);
         }
