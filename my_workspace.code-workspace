@@ -16,7 +16,12 @@
 	"settings": {
 		"files.associations": {
 			"cv.h": "c",
-			"stdlib.h": "c"
+			"stdlib.h": "c",
+			"network_common.h": "c",
+			"esp_system.h": "c",
+			"protocol_examples_common.h": "c",
+			"mqtt_client.h": "c",
+			"esp_wifi.h": "c"
 		}
 	},
 	

@@ -26,8 +26,8 @@ void discrete_convolution_2d(short *image, short *output, int image_width, int i
 void convolution_x(short *image, short *output, int image_width, int image_height, struct Filter *f1d);
 void convolution_y(short *image, short *output, int image_width, int image_height, struct Filter *f1d);
 void pooling_2d(short *image, short *output, int image_width, int image_height, struct Filter *mask, pool_function_t fun, int step);
-void thresholding(short *image, short *output, int image_size, short *threshold, bool broadcast, bool binary);
+void thresholding(short *image, short *output, int image_size, short *threshold, _Bool broadcast, _Bool binary);
 void summed_area_table(short *image, unsigned int *output, int image_width, int image_height);
 void average_of_area(unsigned int *sum_table, short *output, int image_width,int image_height,int side);
 
-void binary_extract_holes(uint8_t mask, uint8_t output, int width, int height);
+void binary_extract_holes(uint8_t *mask, uint8_t *output, int width, int height);

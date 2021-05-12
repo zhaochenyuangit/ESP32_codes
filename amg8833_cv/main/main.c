@@ -32,6 +32,8 @@ unsigned int sum_table[IM_LEN];
 short result_2d[IM_LEN];
 short result_1d[IM_LEN];
 short result_tab[IM_LEN];
+uint8_t dummy_mask[IM_LEN];
+uint8_t dummy_mask2[IM_LEN];
 
 void array_to_string_71(short *raw_temp, char *buf)
 {
@@ -156,6 +158,23 @@ void app_main(void)
     }
     //*/
     
+    performance_evaluation(0);
+    binary_extract_holes(dummy_mask,dummy_mask2,IM_W,IM_H);
+    printf("fill holes: %.2f ms\n",performance_evaluation(1));
+    
+    performance_evaluation(0);
+    thresholding(image_origin,image_holder3,IM_LEN,result_tab,0,1);
+    printf("thresholding full: %.2f ms\n",performance_evaluation(1));
+
+    performance_evaluation(0);
+    thresholding(image_origin,image_holder3,IM_LEN,result_tab,1,1);
+    printf("thresholding broadcast: %.2f ms\n",performance_evaluation(1));
+
+    performance_evaluation(0);
+    int max = max_of_array(dummy_event,64);
+    int std = std_of_array(image_origin,IM_LEN);
+    printf("calc thres: %.2f ms\n",performance_evaluation(1));
+
     //print_pixels_to_serial_8x8(sample_out, false);
 }
 

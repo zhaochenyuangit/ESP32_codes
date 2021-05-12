@@ -65,7 +65,8 @@ esp_err_t start_mqtt(esp_mqtt_client_handle_t *client_ptr)
     esp_mqtt_client_config_t mqtt_cfg = {
         .uri = MYMQTT,
         .port = 1883,
-        .client_id = client_name,
+        .client_id = "ESP32",
+        //.client_id = client_name,
     };
     *client_ptr = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_register_event(*client_ptr, ESP_EVENT_ANY_ID, mqtt_event_handler, *client_ptr);

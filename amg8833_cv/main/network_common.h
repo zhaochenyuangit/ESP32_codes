@@ -17,7 +17,7 @@
 ///*
 #define MYSSID "Racoon&Masters"
 #define MYPWD "gotomunich2019"
-#define MYMQTT "mqtt://192.168.178.42:1883"
+#define MYMQTT "http://test.mosquitto.org:1883"
 //*/
 /*Professor's room*/
 /*
