@@ -1,0 +1,12 @@
+idf_component_register(SRCS "main.c" 
+                            "helper.c" 
+                            "../lib/network_wifi.c" 
+                            "../lib/network_mqtt.c" 
+                            "../lib/grideye_i2c.c" 
+                            "../lib/grideye_api_lv1.c"
+                            "../lib/sim_uart.c"
+                            "../lib/cv_api.c"
+                            "../lib/cv_functions.c"
+                            "../lib/cv_grideye.c"
+                        INCLUDE_DIRS "." 
+                                    "../lib")
