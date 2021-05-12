@@ -2,6 +2,13 @@
 
 static const char *TAG = "CV functions";
 
+struct Filter
+{
+    int *kernel;
+    int side;
+    int *weight;
+};
+
 struct Filter *gkern_1d(double sigma)
 {
     struct Filter *f = malloc(sizeof(struct Filter));
@@ -104,6 +111,8 @@ int min_of_array(short *array, int size)
     int loc = 0;
     for (int index = 1; index < size; index++)
     {
+        if(array[index]==0)
+            continue;
         if (array[index] < array[loc])
         {
             loc = index;

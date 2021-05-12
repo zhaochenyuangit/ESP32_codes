@@ -3,12 +3,7 @@
 #include "math.h"
 #include "esp_log.h"
 
-struct Filter
-{
-    int *kernel;
-    int side;
-    int *weight;
-};
+
 typedef struct Filter Filter;
 typedef int (*pool_function_t)(short[], int);
 

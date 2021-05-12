@@ -9,6 +9,10 @@ int labeling8(uint8_t *mask, int width, int height)
     uint8_t mark = 1;
     uint16_t area_min = 10;
     uint16_t *search_list = malloc(sizeof(uint16_t)*(width*height)); 
+    if(search_list==NULL)
+    {
+        return NULL;
+    }
     uint8_t num = ucAMG_PUB_ODT_CalcDataLabeling8((uint8_t)width,(uint8_t)height,mark,area_min,mask,search_list);
     free(search_list);
     return num;
@@ -17,7 +21,16 @@ int labeling8(uint8_t *mask, int width, int height)
 short *average_filter(short *image,int width, int height, int side)
 {
     short *result = malloc(sizeof(short)*(width*height));
+    if(result==NULL)
+    {
+        return NULL;
+    }
     unsigned int *sum_table = malloc(sizeof(int)*(width*height));
+    if(sum_table==NULL)
+    {
+        free(result);
+        return NULL;
+    }
     summed_area_table(image,sum_table,width,height);
     average_of_area(sum_table,result,width,height,side);
     free(sum_table);
@@ -27,6 +40,10 @@ short *average_filter(short *image,int width, int height, int side)
 void binary_fill_holes(uint8_t *mask,int width, int height)
 {
     uint8_t *holemask = malloc((width*height)*sizeof(uint8_t));
+    if(holemask==NULL)
+    {
+        return NULL;
+    }
     binary_extract_holes(mask,holemask,width,height);
     for(int i =0;i<(width*height);i++)
     {

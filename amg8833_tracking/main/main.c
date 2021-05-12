@@ -1,25 +1,4 @@
-#include <stdio.h>
-#include "stdlib.h"
-#include <string.h>
-#include <stdint.h>
-#include <stddef.h>
-
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/semphr.h"
-#include "freertos/queue.h"
-
-#include "sdkconfig.h"
-
-#include "network_common.h"
-#include "grideye_api_lv1.h"
-#include "cv.h"
-#include "sim_uart.h"
-
-#define UART_SIM 1
-#define IM_W 71
-#define IM_H 71
-#define IM_LEN (IM_W*IM_H)
+#include "main.h"
 
 static const char *TAG = "debug";
 esp_mqtt_client_handle_t client = NULL;
@@ -37,20 +16,24 @@ void pub_msg(void *parameter)
         pixel_value[i]=0;
     }
     short thms_value;
-    UCHAR mask[SNR_SZ];
+    UCHAR mask[IM_LEN];
     const char *topic = "amg8833/pixels";
     const char *topic2 = "amg8833/thermistor";
-    const char *topic3 = "amg8833/mask";
+    const char *topic3 = "amg8833/image71";
     char pixel_msg_buf[400];
     char thms_msg_buf[20];
-    char mask_msg_buf[130];
+    char mask_msg_buf[10100];
     while (1)
     {
         if (xQueueReceive(q_pixels, &pixel_value, 0) == pdTRUE)
         {
             array8x8_to_string(pixel_value, pixel_msg_buf);
+            blob_detection(pixel_value,mask);
             //print_pixels_to_serial(pixel_value, true);
             mqtt_send(client, topic, pixel_msg_buf);
+            mask71x71_to_string(mask,mask_msg_buf);
+            //printf("%s\n",mask_msg_buf);
+            mqtt_send(client, topic3, mask_msg_buf);
         }
         if (xQueueReceive(q_thms, &thms_value, 0) == pdTRUE)
         {
@@ -60,7 +43,7 @@ void pub_msg(void *parameter)
         }
         if (xQueueReceive(q_mask, &mask, 0) == pdTRUE)
         {
-            mask_to_string(mask,mask_msg_buf);
+            mask71x71_to_string(mask,mask_msg_buf);
             //printf("%s\n",mask_msg_buf);
             mqtt_send(client, topic3, mask_msg_buf);
         }
@@ -114,7 +97,7 @@ void app_main(void)
     start_mqtt(&client);
     q_pixels = xQueueCreate(q_len, sizeof(short[SNR_SZ]));
     q_thms = xQueueCreate(q_len, sizeof(short));
-    q_mask = xQueueCreate(q_len, sizeof(UCHAR[SNR_SZ]));
+    q_mask = xQueueCreate(q_len, sizeof(UCHAR[IM_LEN]));
     if (q_pixels == NULL)
     {
         ESP_LOGE(TAG, "create pixels queue failed");
@@ -135,6 +118,6 @@ void app_main(void)
     xTaskCreatePinnedToCore(uart_event_task,"uart_event",4000,
                             (void *)q_pixels,5,NULL,1);
     #endif
-    xTaskCreatePinnedToCore(pub_msg, "publish", 3000,
+    xTaskCreatePinnedToCore(pub_msg, "publish", 20000,
                             NULL, 1, NULL, 0);
 }
