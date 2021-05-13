@@ -31,7 +31,16 @@ void blob_detection(short *raw, uint8_t *result)
     short th = max - 2 * std;
     binary_thresholding(holder2, result, IM_LEN, &th, 1);
     binary_fill_holes(result,IM_W,IM_H);
+    for(int i=0;i<IM_LEN;i++)
+    {
+        im[i] = im[i]*result[i];
+    }
+    short min = min_of_array(im,IM_LEN);
+    average_filter(im,IM_W,IM_H,7);
+    binary_thresholding(im,result,IM_LEN,&min,1);
+    int num = labeling8(result,IM_W,IM_H);
 }
+
 void image_process(void *_)
 {
     short pixel_value[SNR_SZ];

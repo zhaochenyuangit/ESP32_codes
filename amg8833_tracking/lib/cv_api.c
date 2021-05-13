@@ -34,6 +34,19 @@ int labeling8(uint8_t *mask, int width, int height)
     }
     uint8_t num = ucAMG_PUB_ODT_CalcDataLabeling8((uint8_t)width, (uint8_t)height, mark, area_min, mask, search_list);
     free(search_list);
+    if (num == 0)
+    {
+        return num;
+    }
+    if (num > 0)
+    {
+        /** 
+         * blob number returned from Panasonic's API is add by 1
+         * when not zero. Do not understand what is the purpose
+         * so just quick fix it
+         */
+        return num - 1;
+    }
     return num;
 }
 
@@ -78,7 +91,7 @@ bool binary_fill_holes(uint8_t *mask, int width, int height)
         free(padded);
         return 0;
     }
-    binary_extract_holes(mask, holemask, width, height,padded,search_list);
+    binary_extract_holes(mask, holemask, width, height, padded, search_list);
     for (int i = 0; i < (width * height); i++)
     {
         mask[i] = (holemask[i] | mask[i]);

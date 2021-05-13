@@ -112,10 +112,20 @@ int max_of_array(short *array, int size)
     return array[loc];
 }
 
+/*return the smallest non-zero value*/
 int min_of_array(short *array, int size)
 {
     int loc = 0;
-    for (int index = 1; index < size; index++)
+    for (int index = loc; index < size; index++)
+    {
+        if (array[index] != 0)
+        {
+            loc = index;
+            break;
+        }
+    }
+
+    for (int index = loc; index < size; index++)
     {
         if (array[index] == 0)
             continue;
@@ -127,6 +137,7 @@ int min_of_array(short *array, int size)
     return array[loc];
 }
 
+/*average of all non-zero values in an array*/
 int avg_of_array(short *array, int size)
 {
     int sum = 0;
@@ -141,6 +152,7 @@ int avg_of_array(short *array, int size)
     return sum / count;
 }
 
+/*std of all non-zero values in an array*/
 int std_of_array(short *array, int size)
 {
     int avg = avg_of_array(array, size);
