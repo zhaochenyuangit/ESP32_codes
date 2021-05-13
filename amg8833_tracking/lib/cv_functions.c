@@ -60,32 +60,38 @@ struct Filter *gkern_1d(double sigma)
     return f;
 }
 
-struct Filter *avg_kern1d(int side){
-    if(side%2==0){
-        side = side-1;
-        ESP_LOGW(TAG,"update avg kernel side to %d",side);
+struct Filter *avg_kern1d(int side)
+{
+    if (side % 2 == 0)
+    {
+        side = side - 1;
+        ESP_LOGW(TAG, "update avg kernel side to %d", side);
     }
-    struct Filter *f =malloc(sizeof(struct Filter));
-    if(f==NULL){
+    struct Filter *f = malloc(sizeof(struct Filter));
+    if (f == NULL)
+    {
         return NULL;
     }
-    int *vec = malloc(sizeof(int)*side);
-    if(vec ==NULL){
+    int *vec = malloc(sizeof(int) * side);
+    if (vec == NULL)
+    {
         free(f);
         return NULL;
     }
-    int *weight = malloc(sizeof(int)*side);
-    if(weight ==NULL){
+    int *weight = malloc(sizeof(int) * side);
+    if (weight == NULL)
+    {
         free(f);
         free(vec);
         return NULL;
     }
-    int radius = (side-1)/2;
-    for(int i=0;i<=radius;i++){
-        vec[i] =1;
-        vec[2*radius-i] = 1;
-        weight[i] = radius+i+1;
-        weight[2*radius-i] = radius+i+1;
+    int radius = (side - 1) / 2;
+    for (int i = 0; i <= radius; i++)
+    {
+        vec[i] = 1;
+        vec[2 * radius - i] = 1;
+        weight[i] = radius + i + 1;
+        weight[2 * radius - i] = radius + i + 1;
     }
     f->side = side;
     f->kernel = vec;
@@ -111,7 +117,7 @@ int min_of_array(short *array, int size)
     int loc = 0;
     for (int index = 1; index < size; index++)
     {
-        if(array[index]==0)
+        if (array[index] == 0)
             continue;
         if (array[index] < array[loc])
         {
@@ -203,7 +209,7 @@ void convolution_x(short *image, short *output, int image_width, int image_heigh
     {
         for (int col = 0; col < image_width; col++)
         {
-            int index  = row * image_width + col;
+            int index = row * image_width + col;
             unsigned int result = 0;
             for (int x = -radius; x <= radius; x++)
             {
@@ -314,110 +320,133 @@ void binary_thresholding(short *image, uint8_t *output, int image_size, short *t
 void summed_area_table(short *image, unsigned int *output, int image_width, int image_height)
 {
     output[0] = image[0];
-    for(int col = 1;col<image_width;col++){
-        output[col] = image[col] + output[col-1]; 
+    for (int col = 1; col < image_width; col++)
+    {
+        output[col] = image[col] + output[col - 1];
     }
-    for(int row=1;row<image_height;row++){
-        output[row*image_width] = image[row*image_width] + output[(row-1)*image_width];
+    for (int row = 1; row < image_height; row++)
+    {
+        output[row * image_width] = image[row * image_width] + output[(row - 1) * image_width];
     }
-    for(int row =1;row<image_height;row++){
-        for(int col=1;col<image_width;col++){
-            int index = row*image_width + col;
-            int left = index -1;
-            int up = index-image_width;
-            int upleft = up -1;
-            output[index] = image[index] + output[up] + output[left] - output[upleft]; 
+    for (int row = 1; row < image_height; row++)
+    {
+        for (int col = 1; col < image_width; col++)
+        {
+            int index = row * image_width + col;
+            int left = index - 1;
+            int up = index - image_width;
+            int upleft = up - 1;
+            output[index] = image[index] + output[up] + output[left] - output[upleft];
         }
     }
 }
 
-void average_of_area(unsigned int *sum_table, short *output, int image_width,int image_height,int side)
+void average_of_area(unsigned int *sum_table, short *output, int image_width, int image_height, int side)
 {
-    if(side%2==0){
-        side = side-1;
-        ESP_LOGW(TAG,"avg from sum table, update side to %d",side);
+    if (side % 2 == 0)
+    {
+        side = side - 1;
+        ESP_LOGW(TAG, "avg from sum table, update side to %d", side);
     }
-    int radius = (side-1)/2;
-    for(int row=0;row<image_height;row++){
-        int north = (row - radius-1)<0?-1:(row-radius-1);
-        int south = (row + radius)>=image_height? (image_height-1): (row+radius);
-        for(int col=0;col<image_width;col++){
-            int west = (col - radius-1)<0?-1:(col-radius-1);
-            int east = (col + radius)>=image_width? (image_width-1):(col+radius);
+    int radius = (side - 1) / 2;
+    for (int row = 0; row < image_height; row++)
+    {
+        int north = (row - radius - 1) < 0 ? -1 : (row - radius - 1);
+        int south = (row + radius) >= image_height ? (image_height - 1) : (row + radius);
+        for (int col = 0; col < image_width; col++)
+        {
+            int west = (col - radius - 1) < 0 ? -1 : (col - radius - 1);
+            int east = (col + radius) >= image_width ? (image_width - 1) : (col + radius);
 
-            unsigned int nw = ((north<0)||(west<0))?0:sum_table[north*image_width + west];
-            unsigned int ne = (north<0)?0:sum_table[north*image_width + east];
-            unsigned int sw = (west<0)?0:sum_table[south*image_width + west];
-            unsigned int se = sum_table[south*image_width + east];
+            unsigned int nw = ((north < 0) || (west < 0)) ? 0 : sum_table[north * image_width + west];
+            unsigned int ne = (north < 0) ? 0 : sum_table[north * image_width + east];
+            unsigned int sw = (west < 0) ? 0 : sum_table[south * image_width + west];
+            unsigned int se = sum_table[south * image_width + east];
             unsigned int avg = se - sw - ne + nw;
-            avg /= (south-north) * (east-west);
-            output[row*image_width+col] = avg;
+            avg /= (south - north) * (east - west);
+            output[row * image_width + col] = avg;
         }
     }
 }
 
-void binary_extract_holes(uint8_t *mask, uint8_t *outmask, int width, int height)
+void binary_extract_holes(uint8_t *mask, uint8_t *outmask, int width, int height, uint8_t *holder, uint16_t *bg_search_list)
 {
-    int im_addborder_length = (width+2)*(height+2);
-    uint8_t *holder= malloc(sizeof(uint8_t)*im_addborder_length);
-    for(int i =0;i<im_addborder_length;i++){
-        holder[i]=0;
+    int im_addborder_length = (width + 2) * (height + 2);
+    for (int i = 0; i < im_addborder_length; i++)
+    {
+        holder[i] = 0;
     }
-    for (int row =0;row<height;row++){
-        for (int col=0;col<width;col++){
-            int index_in_holder = (row+1)*(width+2) + (col+1);
-            holder[index_in_holder] = mask[row*width + col];
+    for (int row = 0; row < height; row++)
+    {
+        for (int col = 0; col < width; col++)
+        {
+            int index_in_holder = (row + 1) * (width + 2) + (col + 1);
+            holder[index_in_holder] = (mask[row * width + col] != 0x00);
         }
     }
     {
-    uint8_t bg_search_list[im_addborder_length];
-    bg_search_list[0] = 0; //set flood seed to upper left corner in padded mask
-    int bg_counted = 0;
-    int bg_tocount = 1;
-    while(bg_counted<bg_tocount){
-        int row = bg_search_list[bg_counted] / (width+2);
-        int col = bg_search_list[bg_counted] % (width+2);
-        if((row-1)>=0){
-            int index_up = (row-1)*(width+2) +col;
-            if(holder[index_up]==0){
-                holder[index_up] = 1;
-                bg_search_list[bg_tocount] = index_up;
-                bg_tocount++;
+        bg_search_list[0] = 0; //set flood seed to upper left corner in padded mask
+        /* we are sure that the most upper left pixel is 0, 
+        so count it as the first bg pixel 
+        and invert it so that it will not be counted again*/
+        holder[0] = 1;
+        int bg_counted = 0;
+        int bg_tocount = 1;
+        while (bg_counted < bg_tocount)
+        {
+            int index = bg_search_list[bg_counted];
+            int row = index / (width + 2);
+            int col = index % (width + 2);
+            if ((row - 1) >= 0)
+            {
+                int index_up = index - (width + 2);
+                if (holder[index_up] == 0)
+                {
+                    holder[index_up] = 1;
+                    bg_search_list[bg_tocount] = index_up;
+                    bg_tocount++;
+                }
             }
-        } 
-        if((row+1)<(height+2)){
-            int index_down = (row+1)*(width+2) +col;
-            if(holder[index_down]==0){
-                holder[index_down]=1;
-                bg_search_list[bg_tocount] = index_down;
-                bg_tocount++;
+            if ((row + 1) < (height + 2))
+            {
+                int index_down = index + (width + 2);
+                if (holder[index_down] == 0)
+                {
+                    holder[index_down] = 1;
+                    bg_search_list[bg_tocount] = index_down;
+                    bg_tocount++;
+                }
             }
+            if ((col - 1) >= 0)
+            {
+                int index_left = index - 1;
+                if (holder[index_left] == 0)
+                {
+                    holder[index_left] = 1;
+                    bg_search_list[bg_tocount] = index_left;
+                    bg_tocount++;
+                }
+            }
+            if ((col + 1) < (width + 2))
+            {
+                int index_right = index + 1;
+                if (holder[index_right] == 0)
+                {
+                    holder[index_right] = 1;
+                    bg_search_list[bg_tocount] = index_right;
+                    bg_tocount++;
+                }
+            }
+            bg_counted++;
         }
-        if((col-1)>=0){
-            int index_left = row*(width+2) + (col -1);
-            if(holder[index_left]==0){
-                holder[index_left]=1;
-                bg_search_list[bg_tocount] = index_left;
-                bg_tocount++;
-            }
-        }
-        if((col+1)<(width+2)){
-            int index_right = row*(width+2) +(col+1);
-            if(holder[index_right]==0){
-                holder[index_right]=1;
-                bg_search_list[bg_tocount] = index_right;
-                bg_tocount++;
-            }
-        }
-        bg_counted++;
     }
-    }
-    for(int row=0;row<height;row++){
-        for(int col=0;col<width;col++){
-            int index = row*width + col;
-            int index_in_holder = (row+1)*(width+2) + (col+1);
-            outmask[index] = (holder[index_in_holder] ^ (uint8_t)1);
+    for (int row = 0; row < height; row++)
+    {
+        for (int col = 0; col < width; col++)
+        {
+            int index = row * width + col;
+            int index_in_holder = (row + 1) * (width + 2) + (col + 1);
+            outmask[index] = (holder[index_in_holder] ^ 0x01);
         }
     }
-    free(holder);
 }

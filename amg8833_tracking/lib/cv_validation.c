@@ -46,7 +46,6 @@ struct Filter *gaussian_kernel_2d(double sigma)
     return f;
 }
 
-
 void discrete_convolution_2d(short *image, short *output, int image_width, int image_height, struct Filter *filter, int step)
 {
     assert(((image_width - 1) / step) % 1 == 0);
