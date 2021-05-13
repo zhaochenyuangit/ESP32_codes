@@ -33,6 +33,22 @@ int detect_activation(short *pixels, short thms, UCHAR *mask)
     return count;
 }
 
+void array71x71_to_string(short *im, char *buf)
+{
+    int index = 0;
+    for (int i =0;i<IM_LEN;i++){
+        index += sprintf(&buf[index],"%d",im[i]);
+        if ((i + 1) % IM_LEN == 0)
+        {
+            ;
+        }
+        else
+        {
+            index += sprintf(&buf[index], ",");
+        }
+    }
+}
+
 void mask71x71_to_string(UCHAR *mask, char *buf)
 {
     int index = 0;
@@ -81,32 +97,4 @@ double performance_evaluation(int start_or_end)
         gettimeofday(&tik, NULL);
         return -1;
     }
-}
-
-void blob_detection(short *raw, uint8_t *mask)
-{
-    short *im = malloc(sizeof(short)*IM_LEN);
-    interpolation71x71(raw,im);
-    short *avg = average_filter(im,IM_W,IM_H,35);
-    short *ROI = malloc(sizeof(short)*IM_LEN);
-    grayscale_thresholding(im,ROI,IM_LEN,avg,0);
-    free(avg);
-    int max = max_of_array(ROI,IM_LEN);
-    int std = std_of_array(ROI,IM_LEN);
-    short th = max - 2*std;
-    binary_thresholding(ROI,mask,IM_LEN,&th,1);
-    free(ROI);
-    binary_fill_holes(mask,IM_W,IM_H);
-    free(im);
-    /*
-    for(int i =0;i<IM_LEN;i++)
-    {
-        im[i] = im[i]*mask[i];
-    }
-    int min = min_of_array(im,IM_LEN);
-    short *im2 = average_filter(im,IM_W,IM_H,9);
-    free(im);
-    binary_thresholding(im2,mask,IM_LEN,&min,1);
-    free(im2);
-    */
 }

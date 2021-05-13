@@ -40,6 +40,11 @@ unsigned int sum_table[IM_LEN];
 short result_2d[IM_LEN];
 short result_1d[IM_LEN];
 short result_tab[IM_LEN];
+uint8_t mask8[64];
+uint8_t outmask[IM_LEN];
+uint8_t mask2[IM_LEN];
+uint8_t worklist1[(IM_W+2)*(IM_H+2)];
+int worklist2[(IM_W+2)*(IM_H+2)];
 /*0 is start, 1 is end*/
 double performance_evaluation(int start_or_end)
 {
@@ -94,26 +99,25 @@ void print_pixels_to_serial_8x8(short *raw_temp, bool print_float)
     }
     printf("\n");
 }
-void print_mask_to_serial_8x8(uint8_t *mask)
+void print_mask_to_serial(uint8_t *mask, int w,int h)
 {
-    printf("[\n");
-    for (int i = 1; i <= 64; i++)
-    {
-        if(mask[i-1]){
-        printf("*  ");
-        }
-        else
-        {printf("-  ");
-        }
-        //if (i != SNR_SZ)
-        //    printf(", ");
-        if (i % 8 == 0 && i != SNR_SZ)
-            printf("\n");
-        if (i % 8 == 0 && i == SNR_SZ)
-            printf("\n]");
-    }
-    printf("\n");
+   printf("\n");
+   for(int row=0;row<h;row++){
+       for(int col =0;col<w;col++){
+           int index= row*w+col;
+           if(mask[index])
+           {
+               printf("*");
+           }
+           else{
+               printf("-");
+           }
+       }
+       printf("\n");
+   }
+   printf("\n");
 }
+
 
 int main(void)
 {
@@ -164,10 +168,24 @@ int main(void)
     average_of_area(sum_table,result_tab,IM_W,IM_H,20);
     printf("sum table: %.2f ms\n",performance_evaluation(1));
 
-    uint8_t outmask[IM_LEN];
+    short th = 5000;
+    thresholding(image_origin,image_holder1,IM_LEN,&th,1,1);
+    for(int row=0;row<IM_H;row++){
+        for(int col=0;col<IM_W;col++){
+            int index = row*IM_W + col;
+            if((row<50)&&(row>30)&&(col<50)&&col>30){
+                mask2[index] = 0;
+            }
+            else{
+                mask2[index] = image_holder1[index];
+            }
+        }
+    }
     performance_evaluation(0);
-    binary_extract_holes(outmask,outmask,71,71);
+    binary_extract_holes(mask2,outmask,71,71,worklist1,worklist2);
     printf("fill holes: %.2f ms\n",performance_evaluation(1));
+    print_mask_to_serial(worklist1,73,73);
+    //print_mask_to_serial(outmask,71,71);
 
     //print_mask_to_serial_8x8(outmask);
 

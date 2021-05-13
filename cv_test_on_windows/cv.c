@@ -479,13 +479,14 @@ void average_of_area(unsigned int *sum_table, short *output, int image_width,int
         }
     }
 }
-
-void binary_extract_holes(uint8_t *mask, uint8_t *outmask, int width, int height)
+/*be careful of overflow! the list store index must be able to hold a image_width*image_height large number
+ check if to use uint8_t, uint16_t or simply a int list!*/
+void binary_extract_holes(uint8_t *mask, uint8_t *outmask, int width, int height, uint8_t *holder, int *bg_search_list)
 {
     int im_addborder_length = (width+2)*(height+2);
-    uint8_t holder[im_addborder_length];
     for(int i =0;i<im_addborder_length;i++){
         holder[i]=0;
+        bg_search_list[i] =0;
     }
     for (int row =0;row<height;row++){
         for (int col=0;col<width;col++){
@@ -493,9 +494,10 @@ void binary_extract_holes(uint8_t *mask, uint8_t *outmask, int width, int height
             holder[index_in_holder] = mask[row*width + col];
         }
     }
+    
     {
-    uint8_t bg_search_list[im_addborder_length];
     bg_search_list[0] = 0; //set flood seed to upper left corner in padded mask
+    holder[0] = 1;
     int bg_counted = 0;
     int bg_tocount = 1;
     while(bg_counted<bg_tocount){
@@ -533,15 +535,20 @@ void binary_extract_holes(uint8_t *mask, uint8_t *outmask, int width, int height
                 bg_tocount++;
             }
         }
+        printf("%d: row:%d,col:%d\n",bg_counted, row,col);
         bg_counted++;
+        
     }
+    printf("%d,%d\n",bg_counted,bg_tocount);
+    
     }
+    
     for(int row=0;row<height;row++){
         for(int col=0;col<width;col++){
             int index = row*width + col;
             int index_in_holder = (row+1)*(width+2) + (col+1);
-            outmask[index] = (holder[index_in_holder] ^ (uint8_t)1)|(mask[index]);
+            outmask[index] = (holder[index_in_holder]&0x01);// ^ 0x01;//|(mask[index]);
         }
     }
-
+    
 }

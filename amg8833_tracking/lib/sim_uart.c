@@ -27,7 +27,7 @@ static void parse_csv_to_array(uint8_t *buf, short *array, int size)
     }
 }
 
-void uart_event_task(void *pixel_queue)
+void uart_receive_pixels(void *pixel_queue)
 {
     pixel_queue = (QueueHandle_t)pixel_queue;
     uart_event_t event;

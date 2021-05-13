@@ -16,4 +16,4 @@ void uart_init(void);
  * and pass data as if received from sensor
  * @param queue the queue handler which mqtt is listened on
  */ 
-void uart_event_task(void *queue);
+void uart_receive_pixels(void *pixel_queue);

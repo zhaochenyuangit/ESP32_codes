@@ -293,19 +293,20 @@ void grayscale_thresholding(short *image, short *output, int image_size, short *
 
 void binary_thresholding(short *image, uint8_t *output, int image_size, short *threshold, bool broadcast)
 {
+
     if (broadcast)
     {
         short th = threshold[0];
         for (int index = 0; index < image_size; index++)
         {
-            output[index] = (image[index] >= th);
+            output[index] = (bool)(image[index] >= th);
         }
     }
     else
     {
         for (int index = 0; index < image_size; index++)
         {
-            output[index] = (image[index] >= threshold[index]);
+            output[index] = (bool)(image[index] >= threshold[index]);
         }
     }
 }

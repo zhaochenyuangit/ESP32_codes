@@ -33,4 +33,4 @@ void thresholding(short *image, short *output, int image_size, short *threshold,
 void summed_area_table(short *image, unsigned int *output, int image_width, int image_height);
 void average_of_area(unsigned int *sum_table, short *output, int image_width,int image_height,int side);
 
-void binary_extract_holes(uint8_t *mask, uint8_t *output, int width, int height);
+void binary_extract_holes(uint8_t *mask, uint8_t *outmask, int width, int height, uint8_t *holder, int *bg_search_list);

@@ -9,9 +9,9 @@
             "name": "(Windows) 启动",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/a.exe",
-            "args": ["${workspaceFolder}/*.c"],
-            "stopAtEntry": false,
+            "program": "${fileDirname}\\f.exe",
+            "args": [],
+            "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [],
             "console": "externalTerminal"

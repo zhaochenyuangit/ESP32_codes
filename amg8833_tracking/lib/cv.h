@@ -8,10 +8,12 @@ typedef struct Filter Filter;
 typedef int (*pool_function_t)(short[], int);
 
 /*API functions*/
+void image_copy(short *src, short *dst, int size);
+void mask_copy(uint8_t *src, uint8_t *dst, int size);
 int labeling8(uint8_t *mask, int width, int height);
-short *average_filter(short *image,int width, int height, int side);
-void binary_fill_holes(uint8_t *mask,int width, int height);
-short *discrete_convolution_2d_seperable(short *image,int width,int height,Filter *fx, Filter *fy);
+bool average_filter(short *image,int width, int height, int side);
+bool binary_fill_holes(uint8_t *mask,int width, int height);
+bool discrete_convolution_2d_seperable(short *image,int width,int height,Filter *fx, Filter *fy);
 
 /*validation functions*/
 struct Filter *gaussian_kernel_2d(double sigma);
