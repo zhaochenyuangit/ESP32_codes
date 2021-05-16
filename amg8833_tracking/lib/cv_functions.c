@@ -170,9 +170,9 @@ int std_of_array(short *array, int size)
     return (int)sqrt(var);
 }
 
+/*insert 9 pixels between each pixel*/
 void interpolation71x71(short *input8x8, short *output71x71)
 {
-    /*insert 9 pixels between each pixel*/
     const uint8_t w = SNR_SZ_X;
     const uint8_t h = SNR_SZ_Y;
 

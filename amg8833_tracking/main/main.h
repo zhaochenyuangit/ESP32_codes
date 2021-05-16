@@ -19,7 +19,7 @@
 #include "cv.h"
 #include "sim_uart.h"
 
-#define UART_SIM 1
+#define UART_SIM
 #define IM_W 71
 #define IM_H 71
 #define IM_LEN (IM_W*IM_H)

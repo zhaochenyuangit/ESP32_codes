@@ -187,6 +187,56 @@ ULP协处理器编程：居然是汇编，存放在RTC SLOW MEMORY [说明](http
 
 休眠中由上升下降沿唤醒? [一个可能的方法](https://www.esp32.com/viewtopic.php?t=8873)
 
+#### ULP 唤醒
+
+要从休眠模式中醒来还可以用ULP，ULP可以读取GPIO, ADC 和I2C
+
+[网上的例子](https://github.com/wardjm/esp32-ulp-i2c)
+
+ULP自身有4个多用途寄存器（R0~R3）和一个计数器（可用于循环）
+
+ulp程序储存在RTC_SLOW内存中，其指令和数据均为32bit
+
+除了存放程序占用RTC_SLOW, 剩余的RTC_SLOW内存都可以作为寄存器访问
+
+**程序开始**： 
+
+```assembly
+        .global entry
+entry:
+        /* code starts here */
+```
+
+**访问ulp变量** ： 任何在ulp程序中声明为global的变量，都会生成一个前缀为`ulp_*`的变量
+
+```assembly
+ .global measurement_count
+ measurement_count:      .long 0
+```
+
+相当于
+
+```C
+extern uint32_t ulp_measurement_count;
+```
+
+**ULP指令集**
+
+[ULP指令集](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/ulp_instruction_set.html)
+
+```assembly
+
+```
+
+**ULP指令集之外定义的模板**
+
+```C
+// Write immediate value into rtc_reg[low_bit + bit_width - 1 : low_bit], bit_width <= 8
+WRITE_RTC_REG(rtc_reg, low_bit, bit_width, value)
+```
+
+
+
 #### esp-freertos
 
 ESP32 默认跑freertos系统, 而且是esp自己的魔改版

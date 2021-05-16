@@ -30,15 +30,14 @@ void blob_detection(short *raw, uint8_t *result)
     int std = std_of_array(holder2, IM_LEN);
     short th = max - 2 * std;
     binary_thresholding(holder2, result, IM_LEN, &th, 1);
-    binary_fill_holes(result,IM_W,IM_H);
-    for(int i=0;i<IM_LEN;i++)
+    binary_fill_holes(result, IM_W, IM_H);
+    for (int i = 0; i < IM_LEN; i++)
     {
-        im[i] = im[i]*result[i];
+        im[i] = im[i] * result[i];
     }
-    short min = min_of_array(im,IM_LEN);
-    average_filter(im,IM_W,IM_H,7);
-    binary_thresholding(im,result,IM_LEN,&min,1);
-    int num = labeling8(result,IM_W,IM_H);
+    average_filter(im, IM_W, IM_H, 7);
+    binary_thresholding(im, result, IM_LEN, &th, 1);
+    int num = labeling8(result, IM_W, IM_H);
 }
 
 void image_process(void *_)
@@ -47,22 +46,21 @@ void image_process(void *_)
     char performance_msg_buf[10];
     while (1)
     {
-        if (xQueueReceive(q_pixels, &pixel_value, 0) == pdTRUE)
+        if (xQueueReceive(q_pixels, &pixel_value, portMAX_DELAY) == pdTRUE)
         {
-
+            performance_evaluation(0);
             array8x8_to_string(pixel_value, pixel_msg_buf);
             xSemaphoreGive(sema_raw);
 
-            performance_evaluation(0);
             blob_detection(pixel_value, mask);
             //array71x71_to_string(holder1,mask_msg_buf);
-            sprintf(performance_msg_buf, "%.2f", performance_evaluation(1));
-            mask71x71_to_string(mask, mask_msg_buf);
-            xSemaphoreGive(sema_im);
 
+            mask71x71_to_string(mask, mask_msg_buf);
+            //xSemaphoreGive(sema_im);
+            sprintf(performance_msg_buf, "%.2f", performance_evaluation(1));
             mqtt_send(client, "amg8833/speed", performance_msg_buf);
         }
-        vTaskDelay(100 / portTICK_PERIOD_MS);
+        //vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
 
@@ -76,13 +74,12 @@ void pub_raw(void *_)
             mqtt_send(client, topic, pixel_msg_buf);
         }
         //printf("task pub watermark: %d\n", uxTaskGetStackHighWaterMark(NULL));
-        vTaskDelay(100 / portTICK_PERIOD_MS);
+        //vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
 
 void pub_im(void *_)
 {
-    //const char *topic2 = "amg8833/thermistor";
     const char *topic = "amg8833/image71";
     while (1)
     {
@@ -91,10 +88,11 @@ void pub_im(void *_)
             mqtt_send(client, topic, mask_msg_buf);
         }
         //printf("task pub watermark: %d\n", uxTaskGetStackHighWaterMark(NULL));
-        vTaskDelay(100 / portTICK_PERIOD_MS);
+        //vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
 
+#ifndef UART_SIM
 void read_grideye(void *parameter)
 {
     short pixel_value[SNR_SZ];
@@ -121,13 +119,29 @@ void read_grideye(void *parameter)
     }
 }
 
+void pub_thms(void *_)
+{
+    const char *topic2 = "amg8833/thermistor";
+    short thms;
+    char thms_msg_buf[10];
+    while (1)
+    {
+        if (xQueueReceive(q_thms, &thms, portMAX_DELAY) == pdTRUE)
+        {
+            sprintf(thms_msg_buf, "%hd", thms);
+            mqtt_send(client, topic2, thms_msg_buf);
+        }
+        //vTaskDelay(100 / portTICK_PERIOD_MS);
+    }
+}
+#endif
+
 void app_main(void)
 {
 #ifdef UART_SIM
     printf("main programm start\n");
     uart_init();
-#endif
-#ifndef UART_SIM
+#else
     i2c_master_init();
 #endif
     start_wifi();
@@ -157,13 +171,11 @@ void app_main(void)
     {
         ESP_LOGE(TAG, "create sema im failed");
     }
-#ifndef UART_SIM
-    xTaskCreatePinnedToCore(read_grideye, "read_grideye", 3000,
-                            NULL, 1, task_read, 1);
-#endif
 #ifdef UART_SIM
-    xTaskCreatePinnedToCore(uart_receive_pixels, "uart_event", 4000,
-                            (void *)q_pixels, 5, NULL, 1);
+    xTaskCreatePinnedToCore(uart_receive_pixels, "uart_event", 4000, (void *)q_pixels, 5, NULL, 1);
+#else
+    xTaskCreatePinnedToCore(read_grideye, "read_grideye", 3000, NULL, 1, NULL, 0);
+    xTaskCreatePinnedToCore(pub_thms, "publish thms", 2000, NULL, 1, NULL, 0);
 #endif
     xTaskCreatePinnedToCore(image_process, "process", 4000, NULL, 2, NULL, 1);
     xTaskCreatePinnedToCore(pub_raw, "publish", 2000, NULL, 1, NULL, 0);
