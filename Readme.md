@@ -181,6 +181,29 @@ esp_sleep_enable_ext1_wakeup(BUTTON_PIN_BITMASK,ESP_EXT1_WAKEUP_ANY_HIGH);
 //ESP_EXT1_WAKEUP_ALL_LOW
 ```
 
+**RTC引脚号和GPIO号对应**
+
+其中，GPIO34-39只能作为输入，而且没有内置拉高/拉低电阻
+
+```
+- RTC_GPIO0 (GPIO36)
+- RTC_GPIO3 (GPIO39)
+- RTC_GPIO4 (GPIO34)
+- RTC_GPIO5 (GPIO35)
+- RTC_GPIO6 (GPIO25)
+- RTC_GPIO7 (GPIO26)
+- RTC_GPIO8 (GPIO33)
+- RTC_GPIO9 (GPIO32)
+- RTC_GPIO10 (GPIO4)
+- RTC_GPIO11 (GPIO0)
+- RTC_GPIO12 (GPIO2)
+- RTC_GPIO13 (GPIO15)
+- RTC_GPIO14 (GPIO13)
+- RTC_GPIO15 (GPIO12)
+- RTC_GPIO16 (GPIO14)
+- RTC_GPIO17 (GPIO27)
+```
+
 wake stub: 唤醒后第一时间运行的程序, 存放在RTC FAST MEMORY [说明](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/deep-sleep-stub.html)
 
 ULP协处理器编程：居然是汇编，存放在RTC SLOW MEMORY [说明](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/ulp.html)
@@ -189,9 +212,11 @@ ULP协处理器编程：居然是汇编，存放在RTC SLOW MEMORY [说明](http
 
 #### ULP 唤醒
 
-要从休眠模式中醒来还可以用ULP，ULP可以读取GPIO, ADC 和I2C
+要从休眠模式中醒来还可以用ULP，ULP可以读取GPIO, ADC 和I2C.
 
-[网上的例子](https://github.com/wardjm/esp32-ulp-i2c)
+> 先在idf.py menuconfig -> components -> esp32-specific 中启动ULP coprocessor 并分配RTC内存
+
+[网上的例子（i2c）](https://github.com/wardjm/esp32-ulp-i2c)
 
 ULP自身有4个多用途寄存器（R0~R3）和一个计数器（可用于循环）
 
@@ -225,7 +250,9 @@ extern uint32_t ulp_measurement_count;
 [ULP指令集](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/ulp_instruction_set.html)
 
 ```assembly
-
+MOVE Rdst <- Rsrc (16bit signed)
+ST Rsrc <- Rdst, offset
+LD Rdst -> Rsrc, offset
 ```
 
 **ULP指令集之外定义的模板**

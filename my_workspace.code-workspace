@@ -22,7 +22,11 @@
 			"protocol_examples_common.h": "c",
 			"mqtt_client.h": "c",
 			"esp_wifi.h": "c",
-			"main.h": "c"
+			"main.h": "c",
+			"ulp_main.h": "c",
+			"chrono": "c",
+			"algorithm": "c",
+			"esp_sleep.h": "c"
 		}
 	},
 	
