@@ -36,18 +36,18 @@ void app_main(void)
     vTaskDelay(3 * 1000 / portTICK_PERIOD_MS);
     esp_restart();
 }
-const char *namespace = "testcount";
-const char *count_key = "count";
-ESP_ERROR_CHECK(nvs_flash_init());
-nvs_handle_t handle;
-ESP_ERROR_CHECK(nvs_open(namespace, NVS_READWRITE, &handle));
-/* Read count from NVS*/
-esp_err_t err = nvs_get_u32(handle, count_key, &count);
-assert(err == ESP_OK || err == ESP_ERR_NVS_NOT_FOUND);
-printf("Read count from NVS: %5d\n", count);
-count++;
-printf("change count to: %d\n", count);
-/* Save the new pulse count to NVS */
-ESP_ERROR_CHECK(nvs_set_u32(handle, count_key, count));
-ESP_ERROR_CHECK(nvs_commit(handle));
-nvs_close(handle);
+// const char *namespace = "testcount";
+// const char *count_key = "count";
+// ESP_ERROR_CHECK(nvs_flash_init());
+// nvs_handle_t handle;
+// ESP_ERROR_CHECK(nvs_open(namespace, NVS_READWRITE, &handle));
+// /* Read count from NVS*/
+// esp_err_t err = nvs_get_u32(handle, count_key, &count);
+// assert(err == ESP_OK || err == ESP_ERR_NVS_NOT_FOUND);
+// printf("Read count from NVS: %5d\n", count);
+// count++;
+// printf("change count to: %d\n", count);
+// /* Save the new pulse count to NVS */
+// ESP_ERROR_CHECK(nvs_set_u32(handle, count_key, count));
+// ESP_ERROR_CHECK(nvs_commit(handle));
+// nvs_close(handle);

@@ -11,6 +11,9 @@
 		},
 		{
 			"path": "..\\esp-idf\\examples"
+		},
+		{
+			"path": "..\\hulp"
 		}
 	],
 	"settings": {
@@ -26,7 +29,8 @@
 			"ulp_main.h": "c",
 			"chrono": "c",
 			"algorithm": "c",
-			"esp_sleep.h": "c"
+			"esp_sleep.h": "c",
+			"rtc_i2c_reg.h": "c"
 		}
 	},
 	

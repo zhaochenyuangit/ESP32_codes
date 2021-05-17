@@ -218,6 +218,8 @@ ULP协处理器编程：居然是汇编，存放在RTC SLOW MEMORY [说明](http
 
 [网上的例子（i2c）](https://github.com/wardjm/esp32-ulp-i2c)
 
+[另一个比较好的例子](https://github.com/boarchuz/HULP/blob/fbc9b61d57c6b83079def9ddb6ced9c30d1f7bb7/src/hulp.cpp#L108-L184)
+
 ULP自身有4个多用途寄存器（R0~R3）和一个计数器（可用于循环）
 
 ulp程序储存在RTC_SLOW内存中，其指令和数据均为32bit
@@ -251,6 +253,16 @@ extern uint32_t ulp_measurement_count;
 
 ```assembly
 MOVE Rdst <- Rsrc (16bit signed)
+//令全局变量数字+1
+move r1, x // load address of x in r1
+ld r0, r1, 0 // load data from x in r0
+add r0, r0, 1 // increment r0
+st r0,r1,0 // store r0 as new content of x
+
+```
+
+```assembly
+
 ST Rsrc <- Rdst, offset
 LD Rdst -> Rsrc, offset
 ```
@@ -262,7 +274,9 @@ LD Rdst -> Rsrc, offset
 WRITE_RTC_REG(rtc_reg, low_bit, bit_width, value)
 ```
 
-
+>  **硬件ULP I2C是假的，淦** [详情](https://esp32.com/viewtopic.php?t=4623)
+>
+> 因为设计失误根本没用，必须用软件版本，见[这里](https://github.com/tomtor/ulp-i2c)
 
 #### esp-freertos
 
