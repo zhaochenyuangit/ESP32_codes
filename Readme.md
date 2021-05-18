@@ -278,6 +278,12 @@ WRITE_RTC_REG(rtc_reg, low_bit, bit_width, value)
 >
 > 因为设计失误根本没用，必须用软件版本，见[这里](https://github.com/tomtor/ulp-i2c)
 
+#### ULP 软件I2C
+
+![i2cprotocol](img/900px-I2C_data_transfer.svg.png)
+
+
+
 #### esp-freertos
 
 ESP32 默认跑freertos系统, 而且是esp自己的魔改版
