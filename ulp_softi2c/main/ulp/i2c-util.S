@@ -95,7 +95,7 @@ read8:
 	psr
 	jump read_intro
 
-	move r2,1 // last byte
+	move r2,1 // last byte, 1 refers to NACK
 	psr
 	jump i2c_read_byte
 	push r0

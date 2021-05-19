@@ -61,11 +61,11 @@ void app_main()
         break;
     case ESP_SLEEP_WAKEUP_ULP:
         printf("ULP wakeup, printing status\n");
-        printf("%d\n", ulp_temp);
+        printf("%d\n", (ulp_temp & 0xffff));
         break;
     case ESP_SLEEP_WAKEUP_TIMER:
         printf("...timer\n");
-        printf("%d\n",ulp_temp);
+        printf("%04x\n",ulp_temp);
         break;
     default:
         printf("unhandled event%d\n",cause);

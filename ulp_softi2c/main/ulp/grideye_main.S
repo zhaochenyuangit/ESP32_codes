@@ -9,7 +9,7 @@
 #include "stack.S"
 
 .set GRIDEYE_ADDR, 0x69
-.set PIXEL_START, 0x80
+.set PIXEL_START, 0xc0
 .set THMS_START, 0x0E
 
 /* Define variables, which go into .bss section (zero-initialized data) */
@@ -41,15 +41,17 @@ entry:
 	move r1, PIXEL_START
 	push r1
 	psr
-	jump read8
+	jump read16
 	add r3,r3,2 // remove call parameters from stack
+	/*wake up if temp higher than 0x60*/
+	jumpr waitNext, 96, lt
 	move r1,r0 // save result
 	move r2,temp // store result
 	st r1,r2,0
-	jumpr waitNext, 80, lt
-	//move r2, 50
-	//psr
-	//jump waitMs 
+	
+	move r2, 50
+	psr
+	jump waitMs
 
 	// GPIO2 LED OFF
 	WRITE_RTC_REG(RTC_GPIO_OUT_REG, RTC_GPIO_OUT_DATA_S + 12, 1, 0)
@@ -64,7 +66,7 @@ waitNext:
 	halt
 
 waitMs:
-	wait 8000
+	wait 8000 //wait 1ms
 	sub r2,r2,1
 	jump doneWaitMs,eq
 	jump waitMs
