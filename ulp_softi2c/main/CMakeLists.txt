@@ -1,4 +1,4 @@
-idf_component_register(SRCS "main.c"
+idf_component_register(SRCS "main.c" "grideye_i2c.c" "grideye_api_lv1.c"
                     INCLUDE_DIRS ""
                     REQUIRES soc nvs_flash ulp)
 #

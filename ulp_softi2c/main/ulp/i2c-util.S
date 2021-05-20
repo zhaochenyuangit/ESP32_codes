@@ -137,3 +137,29 @@ read16:
 
 	move r2,0 // OK
 	ret
+
+.global read16_inverse
+read16_inverse:
+	psr
+	jump read_intro
+
+	move r2,0
+	psr
+	jump i2c_read_byte
+	push r0
+
+	move r2,1 // last byte
+	psr
+	jump i2c_read_byte
+	push r0
+
+	psr
+	jump i2c_stop_cond
+
+	pop r0
+	pop r2
+	lsh r0,r0,8
+	or r0,r0,r2
+
+	move r2,0 // OK
+	ret

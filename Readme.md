@@ -148,142 +148,6 @@ gpio_isr_handler_add(GPIO_INPUT_IO_0, gpio_isr_handler, (void*) GPIO_INPUT_IO_0)
 gpio_isr_handler_remove(GPIO_INPUT_IO_0);
 ```
 
-#### 休眠模式
-
-[官方文档](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html)
-
-浅睡眠 light sleep: 停止CPU的时钟，**暂停**当前执行，恢复后从暂停的地方继续，内存都在
-
-深睡眠 deep sleep：CPU断电，内存中的数据消失，恢复后**重启** app_main()。
-
-<img src="img/ESP32-Deep-Sleep-Functional-Block-Diagram.png" alt="deepsleep" style="zoom:67%;" />
-
-深睡眠只有RTC时钟、RTC内存、ULP协处理器在工作
-
-所以必要的数据要加`RTC_DATA_ARRT` 标识，以存储在RTC内存（沉睡不消失，不过断电仍消失）
-
-`RTC_FAST` 有8K，但只能PRO_CPU用
-
-`RTC_SLOW` 有8K，两个CPU，ULP协处理器都可以用
-
-设置唤醒源：
-
-```C
-/*唤醒方式1：定时器
-沉睡时间以微秒计*/
-esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
-/*唤醒方式2：外部引脚
-只能用一些特定的RTC引脚：0,2,4,12-15,25-27,32-39*/
-//单个引脚唤醒源, 高电平或低电平唤醒
-esp_sleep_enable_ext0_wakeup(GPIO_NUM_33,1);
-//多个引脚唤醒源，任意高或全低唤醒
-esp_sleep_enable_ext1_wakeup(BUTTON_PIN_BITMASK,ESP_EXT1_WAKEUP_ANY_HIGH);
-//ESP_EXT1_WAKEUP_ALL_LOW
-```
-
-**RTC引脚号和GPIO号对应**
-
-其中，GPIO34-39只能作为输入，而且没有内置拉高/拉低电阻
-
-```
-- RTC_GPIO0 (GPIO36)
-- RTC_GPIO3 (GPIO39)
-- RTC_GPIO4 (GPIO34)
-- RTC_GPIO5 (GPIO35)
-- RTC_GPIO6 (GPIO25)
-- RTC_GPIO7 (GPIO26)
-- RTC_GPIO8 (GPIO33)
-- RTC_GPIO9 (GPIO32)
-- RTC_GPIO10 (GPIO4)
-- RTC_GPIO11 (GPIO0)
-- RTC_GPIO12 (GPIO2)
-- RTC_GPIO13 (GPIO15)
-- RTC_GPIO14 (GPIO13)
-- RTC_GPIO15 (GPIO12)
-- RTC_GPIO16 (GPIO14)
-- RTC_GPIO17 (GPIO27)
-```
-
-wake stub: 唤醒后第一时间运行的程序, 存放在RTC FAST MEMORY [说明](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/deep-sleep-stub.html)
-
-ULP协处理器编程：居然是汇编，存放在RTC SLOW MEMORY [说明](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/ulp.html)
-
-休眠中由上升下降沿唤醒? [一个可能的方法](https://www.esp32.com/viewtopic.php?t=8873)
-
-#### ULP 唤醒
-
-要从休眠模式中醒来还可以用ULP，ULP可以读取GPIO, ADC 和I2C.
-
-> 先在idf.py menuconfig -> components -> esp32-specific 中启动ULP coprocessor 并分配RTC内存
-
-[网上的例子（i2c）](https://github.com/wardjm/esp32-ulp-i2c)
-
-[另一个比较好的例子](https://github.com/boarchuz/HULP/blob/fbc9b61d57c6b83079def9ddb6ced9c30d1f7bb7/src/hulp.cpp#L108-L184)
-
-ULP自身有4个多用途寄存器（R0~R3）和一个计数器（可用于循环）
-
-ulp程序储存在RTC_SLOW内存中，其指令和数据均为32bit
-
-除了存放程序占用RTC_SLOW, 剩余的RTC_SLOW内存都可以作为寄存器访问
-
-**程序开始**： 
-
-```assembly
-        .global entry
-entry:
-        /* code starts here */
-```
-
-**访问ulp变量** ： 任何在ulp程序中声明为global的变量，都会生成一个前缀为`ulp_*`的变量
-
-```assembly
- .global measurement_count
- measurement_count:      .long 0
-```
-
-相当于
-
-```C
-extern uint32_t ulp_measurement_count;
-```
-
-**ULP指令集**
-
-[ULP指令集](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/ulp_instruction_set.html)
-
-```assembly
-MOVE Rdst <- Rsrc (16bit signed)
-//令全局变量数字+1
-move r1, x // load address of x in r1
-ld r0, r1, 0 // load data from x in r0
-add r0, r0, 1 // increment r0
-st r0,r1,0 // store r0 as new content of x
-
-```
-
-```assembly
-
-ST Rsrc <- Rdst, offset
-LD Rdst -> Rsrc, offset
-```
-
-**ULP指令集之外定义的模板**
-
-```C
-// Write immediate value into rtc_reg[low_bit + bit_width - 1 : low_bit], bit_width <= 8
-WRITE_RTC_REG(rtc_reg, low_bit, bit_width, value)
-```
-
->  **硬件ULP I2C是假的，淦** [详情](https://esp32.com/viewtopic.php?t=4623)
->
-> 因为设计失误根本没用，必须用软件版本，见[这里](https://github.com/tomtor/ulp-i2c)
-
-#### ULP 软件I2C
-
-![i2cprotocol](img/900px-I2C_data_transfer.svg.png)
-
-
-
 #### esp-freertos
 
 ESP32 默认跑freertos系统, 而且是esp自己的魔改版
@@ -674,6 +538,161 @@ while(1){
      ```
 
      
+
+## 休眠模式
+
+[官方文档](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/sleep_modes.html)
+
+浅睡眠 light sleep: 停止CPU的时钟，**暂停**当前执行，恢复后从暂停的地方继续，内存都在
+
+深睡眠 deep sleep：CPU断电，内存中的数据消失，恢复后**重启** app_main()。
+
+<img src="img/ESP32-Deep-Sleep-Functional-Block-Diagram.png" alt="deepsleep" style="zoom:67%;" />
+
+深睡眠只有RTC时钟、RTC内存、ULP协处理器在工作
+
+所以必要的数据要加`RTC_DATA_ARRT` 标识，以存储在RTC内存（沉睡不消失，不过断电仍消失）
+
+`RTC_FAST` 有8K，但只能PRO_CPU用
+
+`RTC_SLOW` 有8K，两个CPU，ULP协处理器都可以用
+
+设置唤醒源：
+
+```C
+/*唤醒方式1：定时器
+沉睡时间以微秒计*/
+esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
+/*唤醒方式2：外部引脚
+只能用一些特定的RTC引脚：0,2,4,12-15,25-27,32-39*/
+//单个引脚唤醒源, 高电平或低电平唤醒
+esp_sleep_enable_ext0_wakeup(GPIO_NUM_33,1);
+//多个引脚唤醒源，任意高或全低唤醒
+esp_sleep_enable_ext1_wakeup(BUTTON_PIN_BITMASK,ESP_EXT1_WAKEUP_ANY_HIGH);
+//ESP_EXT1_WAKEUP_ALL_LOW
+```
+
+**RTC引脚号和GPIO号对应**
+
+其中，GPIO34-39只能作为输入，而且没有内置拉高/拉低电阻
+
+```
+- RTC_GPIO0 (GPIO36)
+- RTC_GPIO3 (GPIO39)
+- RTC_GPIO4 (GPIO34)
+- RTC_GPIO5 (GPIO35)
+- RTC_GPIO6 (GPIO25)
+- RTC_GPIO7 (GPIO26)
+- RTC_GPIO8 (GPIO33)
+- RTC_GPIO9 (GPIO32)
+- RTC_GPIO10 (GPIO4)
+- RTC_GPIO11 (GPIO0)
+- RTC_GPIO12 (GPIO2)
+- RTC_GPIO13 (GPIO15)
+- RTC_GPIO14 (GPIO13)
+- RTC_GPIO15 (GPIO12)
+- RTC_GPIO16 (GPIO14)
+- RTC_GPIO17 (GPIO27)
+```
+
+wake stub: 唤醒后第一时间运行的程序, 存放在RTC FAST MEMORY [说明](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/deep-sleep-stub.html)
+
+ULP协处理器编程：居然是汇编，存放在RTC SLOW MEMORY [说明](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/ulp.html)
+
+休眠中由上升下降沿唤醒? [一个可能的方法](https://www.esp32.com/viewtopic.php?t=8873)
+
+#### ULP 唤醒
+
+要从休眠模式中醒来还可以用ULP，ULP可以读取GPIO, ADC 和I2C.
+
+> 先在idf.py menuconfig -> components -> esp32-specific 中启动ULP coprocessor 并分配RTC内存
+
+[网上的例子（i2c）](https://github.com/wardjm/esp32-ulp-i2c)
+
+[另一个比较好的例子](https://github.com/boarchuz/HULP/blob/fbc9b61d57c6b83079def9ddb6ced9c30d1f7bb7/src/hulp.cpp#L108-L184)
+
+ULP自身有4个多用途寄存器（R0~R3）和一个计数器（可用于循环）
+
+ulp程序储存在RTC_SLOW内存中，其指令和数据均为32bit
+
+除了存放程序占用RTC_SLOW, 剩余的RTC_SLOW内存都可以作为寄存器访问
+
+**程序开始**： 
+
+```assembly
+        .global entry
+entry:
+        /* code starts here */
+```
+
+**访问ulp变量** ： 任何在ulp程序中声明为global的变量，都会生成一个前缀为`ulp_*`的变量
+
+```assembly
+ .global measurement_count
+ measurement_count:      .long 0
+```
+
+相当于
+
+```C
+extern uint32_t ulp_measurement_count;
+```
+
+**ULP指令集**
+
+[ULP指令集](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/ulp_instruction_set.html)
+
+```assembly
+MOVE Rdst <- Rsrc (16bit signed)
+//令全局变量数字+1
+move r1, x // load address of x in r1
+ld r0, r1, 0 // load data from x in r0
+add r0, r0, 1 // increment r0
+st r0,r1,0 // store r0 as new content of x
+
+```
+
+```assembly
+ST Rsrc <- Rdst, offset
+LD Rdst -> Rsrc, offset
+```
+
+**ULP指令集之外定义的模板**
+
+```C
+// Write immediate value into rtc_reg[low_bit + bit_width - 1 : low_bit], bit_width <= 8
+WRITE_RTC_REG(rtc_reg, low_bit, bit_width, value)
+```
+
+>  **硬件ULP I2C是假的，淦** [详情](https://esp32.com/viewtopic.php?t=4623)
+>
+>  因为设计失误根本没用，必须用软件版本，见[这里](https://github.com/tomtor/ulp-i2c)
+
+#### ULP 软件I2C
+
+[官方文档](https://github.com/espressif/esp-iot-solution/tree/release/v1.1/examples/ulp_examples/ulp_i2c_bitbang/main)
+
+直接控制引脚高低来I2C通信
+
+![i2cprotocol](img/900px-I2C_data_transfer.svg.png)
+
+对于有次级寄存器的I2C从设备（比如grideye amg8833）, 读取指定寄存器字节要按以下顺序：
+
+>  Start, Write Address, Register Index, Repeat Start signal, Address with R/W bit =1, Read Data byte1 with ACK, ... , Read Data byte n with NACK, Stop condition signal.   
+
+**用r3寄存器实现柞**
+
+```
+move \sr,next2
+st \rx,r3,0
+sub r3,r3,1
+```
+
+Note that `push` is not a real instruction, it translates to TWO assembly instructions!
+
+This also assumes that `pos=.` is pointing to the last seen assembly instruction, not to the `move` instruction.
+
+`read_intro` is called from `read8` or `read16` without new parameters, so the return address to `read8/16` is the most recent stack entry at `r3+4` and the return address to the caller of `read8/16` is at `r3+8` so the two parameters originally passed to `read8/16` are now at `r3+12` and `r3+16`
 
 ## C语言知识
 
