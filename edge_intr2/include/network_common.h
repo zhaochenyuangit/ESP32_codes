@@ -13,6 +13,8 @@
 
 #include "esp_log.h"
 #include "mqtt_client.h"
+#include "esp_pm.h"
+#include "esp_sleep.h"
 /*home*/
 /*
 #define MYSSID "Racoon&Masters"

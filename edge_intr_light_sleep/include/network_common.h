@@ -13,22 +13,25 @@
 
 #include "esp_log.h"
 #include "mqtt_client.h"
+#include "esp_pm.h"
+#include "esp_sleep.h"
 /*home*/
-/*
+///*
 #define MYSSID "Racoon&Masters"
 #define MYPWD "gotomunich2019"
 #define MYMQTT "mqtt://192.168.178.42:1883"
 //*/
 /*Professor's room*/
-///*
+/*
 #define MYSSID "CAPS"
 #define MYPWD "caps!schulz-wifi"
 #define MYMQTT "mqtt://131.159.85.131:1883"
-//*/
+*/
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT BIT1
 #define MQTT_CONNECTED_BIT BIT0
 #define MQTT_ERROR_BIT BIT1
+
 
 /**
  * @brief start wifi, reconnect when disconnect
@@ -48,3 +51,5 @@ esp_err_t start_mqtt(esp_mqtt_client_handle_t *client);
  * @param data a string
  */
 void mqtt_send(esp_mqtt_client_handle_t client, const char *topic, const char *data);
+
+void pm_config();

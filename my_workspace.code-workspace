@@ -31,7 +31,15 @@
 			"algorithm": "c",
 			"esp_sleep.h": "c",
 			"rtc_i2c_reg.h": "c",
-			"grideye_api_lv1.h": "c"
+			"grideye_api_lv1.h": "c",
+			"esp_timer.h": "c",
+			"freertos.h": "c",
+			"complex": "c",
+			"commands_corner_cases.h": "c",
+			"esp_pm.h": "c",
+			"edge_intr_sleep.h": "c",
+			"edge_intr_debounce.h": "c",
+			"sntpcontroller.h": "c"
 		}
 	},
 	

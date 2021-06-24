@@ -553,9 +553,15 @@ while(1){
 
 所以必要的数据要加`RTC_DATA_ARRT` 标识，以存储在RTC内存（沉睡不消失，不过断电仍消失）
 
-`RTC_FAST` 有8K，但只能PRO_CPU用
+> 默认存在RTC slow， 通过设置menuconfig option named `CONFIG_ESP32_RTCDATA_IN_FAST_MEM` 可以改到RTC fast, 把RTC slow全数留给ULP
+>
+> 也可以显式地设置 `RTC_FAST_ATTR` 或 `RTC_SLOW_ATTR`
+>
+> `RTC_FAST_ATTR` 有8K，但只能PRO_CPU用
+>
+> `RTC_SLOW_ATTR` 有8K，两个CPU，ULP协处理器都可以用
 
-`RTC_SLOW` 有8K，两个CPU，ULP协处理器都可以用
+
 
 设置唤醒源：
 
@@ -693,6 +699,20 @@ Note that `push` is not a real instruction, it translates to TWO assembly instru
 This also assumes that `pos=.` is pointing to the last seen assembly instruction, not to the `move` instruction.
 
 `read_intro` is called from `read8` or `read16` without new parameters, so the return address to `read8/16` is the most recent stack entry at `r3+4` and the return address to the caller of `read8/16` is at `r3+8` so the two parameters originally passed to `read8/16` are now at `r3+12` and `r3+16`
+
+## power save mode
+
+[DTIM](https://tech-brain.us/?p=327)
+
+[wifi 802.11](https://zhuanlan.zhihu.com/p/21623985)
+
+[esp power management docu](https://docs.espressif.com/projects/esp-idf/zh_CN/latest/esp32/api-reference/system/power_management.html)
+
+[freertos tickless ide](https://www.freertos.org/low-power-tickless-rtos.html)
+
+[issue: wifi always connected at second time](https://www.esp32.com/viewtopic.php?t=16622)
+
+
 
 ## C语言知识
 
@@ -846,3 +866,6 @@ blob: binary large object, 是一些连续的像素点的集群
 
 [快速区域求和](https://en.wikipedia.org/wiki/Summed-area_table#The_algorithm)
 
+## RTC 存储
+
+[结构体size优化](https://mezzantrop.wordpress.com/2016/10/28/structure-size-optimization-in-c/)

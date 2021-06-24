@@ -27,8 +27,10 @@ static void my_task(void *_)
 
 void app_main(void)
 {
-    simulation_setup();
+    
     wakeup_setup();
+    
+    simulation_setup();
     enter();
     peekIntoandLeaveG11();
 }

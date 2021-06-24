@@ -14,17 +14,17 @@
 #include "esp_log.h"
 #include "mqtt_client.h"
 /*home*/
-/*
+///*
 #define MYSSID "Racoon&Masters"
 #define MYPWD "gotomunich2019"
 #define MYMQTT "mqtt://192.168.178.42:1883"
 //*/
 /*Professor's room*/
-///*
+/*
 #define MYSSID "CAPS"
 #define MYPWD "caps!schulz-wifi"
 #define MYMQTT "mqtt://131.159.85.131:1883"
-//*/
+*/
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT BIT1
 #define MQTT_CONNECTED_BIT BIT0

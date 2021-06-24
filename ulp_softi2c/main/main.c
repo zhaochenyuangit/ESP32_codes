@@ -118,7 +118,6 @@ void app_main()
         break;
     case ESP_SLEEP_WAKEUP_TIMER:
         printf("...timer\n");
-        printf("%04x\n", ulp_temp);
         break;
     default:
         printf("unhandled event%d\n", cause);
