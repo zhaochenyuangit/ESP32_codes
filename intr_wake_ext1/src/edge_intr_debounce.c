@@ -40,7 +40,7 @@ static void edge_intr_task(void *_)
         if (xQueueReceive(edge_intr_queue, &io_num, portMAX_DELAY))
         {
             //wait until reading is stable
-            vTaskDelay(pdMS_TO_TICKS(DEBOUNCE_TIMER_MS / 2));
+            vTaskDelay(pdMS_TO_TICKS(DEBOUNCE_TIMER_MS));
             //
             int pin_level = gpio_get_level(io_num);
             gpio_evt_msg msg = {
@@ -85,12 +85,11 @@ void wakeup_setup(void)
         ESP_LOGE(TAG, "create queue failed");
     }
 
-    xTaskCreatePinnedToCore(edge_intr_task, "edge intr", 2048, NULL, 1, NULL, 1);
+    xTaskCreatePinnedToCore(edge_intr_task, "edge intr", 2048, NULL, 10, NULL, 1);
 
     //only for deepsleep
     if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_EXT1)
     {
-        ESP_LOGI(TAG, "wake up by ext1");
         if (gpio_get_level(GPIO_PIN_1))
         {
             gpio_evt_msg msg = {

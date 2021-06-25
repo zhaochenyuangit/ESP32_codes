@@ -10,7 +10,7 @@
 #include "esp_log.h"
 #include "esp_sleep.h"
 
-#define SLEEP_TIMER_MS 5000
+#define SLEEP_TIMER_MS 2000
 #define WAKE_UP_INTERVAL_S 15
 #define S_TO_US_FACTOR 1000000
 
