@@ -27,7 +27,7 @@ stackEnd:
 	.long 0
 
 
-	/* Code goes into .text section */
+/* Code goes into .text section */
 	.text
 	.global entry
 entry:

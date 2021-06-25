@@ -39,7 +39,12 @@
 			"esp_pm.h": "c",
 			"edge_intr_sleep.h": "c",
 			"edge_intr_debounce.h": "c",
-			"sntpcontroller.h": "c"
+			"sntpcontroller.h": "c",
+			"stdio.h": "c",
+			"deep_sleep.h": "c",
+			"rtc_io_reg.h": "c",
+			"rtc_cntl_reg.h": "c",
+			"sens_reg.h": "c"
 		}
 	},
 	
