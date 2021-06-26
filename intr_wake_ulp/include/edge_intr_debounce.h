@@ -15,7 +15,7 @@
 
 #include "sdkconfig.h"
 
-#define DEBOUNCE_TIMER_MS 20
+#define DEBOUNCE_TIMER_MS 100
 #define GPIO_PIN_1 GPIO_NUM_25
 #define GPIO_PIN_2 GPIO_NUM_4
 

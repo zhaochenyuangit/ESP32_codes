@@ -137,7 +137,6 @@ static void pm_config()
 #ifdef DEEP_SLEEP
 static void init_ulp_program()
 {
-    ESP_LOGI(TAG, "init ulp");
     rtc_gpio_init(RTC_PIN_1);
     rtc_gpio_set_direction(RTC_PIN_1, RTC_GPIO_MODE_INPUT_ONLY);
     rtc_gpio_pullup_dis(RTC_PIN_1);
@@ -154,22 +153,14 @@ static void init_ulp_program()
     esp_err_t err = ulp_load_binary(0, ulp_main_bin_start,
                                     (ulp_main_bin_end - ulp_main_bin_start) / sizeof(uint32_t));
     ESP_ERROR_CHECK(err);
-    ulp_set_wakeup_period(0, 100 * 1000);
+    ulp_set_wakeup_period(0, 10*1000);
+    /* Start the ULP program */
+    ESP_ERROR_CHECK(esp_sleep_enable_ulp_wakeup());
+    err = ulp_run(&ulp_entry - RTC_SLOW_MEM);
+    ESP_ERROR_CHECK(err);
+     ESP_LOGI(TAG, "init ulp finish");
 }
 #endif
-
-static void go_to_sleep(TimerHandle_t xTimer)
-{
-    printf("Entering deep sleep\n\n");
-    //ESP_ERROR_CHECK(esp_sleep_enable_timer_wakeup(10*1000000));
-    ESP_ERROR_CHECK(esp_sleep_enable_ulp_wakeup());
-
-    /* Start the program */
-    esp_err_t err = ulp_run(&ulp_entry - RTC_SLOW_MEM);
-    ESP_ERROR_CHECK(err);
-
-    esp_deep_sleep_start();
-}
 
 void app_main(void)
 {
@@ -190,7 +181,7 @@ void app_main(void)
 
 #else
     //pm_config();
-    wakeup_setup();
+    //wakeup_setup();
     print_slept_time();
     printf("ulp debug: %d, %4x, %d\n", (ulp_debug & 0xffff), (ulp_debug2 & 0xffff), (ulp_triggered_pin & 0xffff));
     
@@ -225,6 +216,6 @@ void app_main(void)
     }
 
     create_sleep_timer();
-    rtc_isr_register()
+    //rtc_isr_register()
 #endif
 }

@@ -81,7 +81,7 @@ esp_err_t start_wifi(void)
             .ssid = MYSSID,
             .password = MYPWD,
             .threshold.authmode = WIFI_AUTH_WPA2_PSK,
-            .listen_interval = 3,
+            .listen_interval = 5,
             .pmf_cfg = {
                 .capable = true,
                 .required = false},

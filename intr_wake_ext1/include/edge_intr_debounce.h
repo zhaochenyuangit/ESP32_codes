@@ -15,14 +15,15 @@
 
 #include "sdkconfig.h"
 
-#define DEBOUNCE_TIMER_MS 100
+#define DEBOUNCE_TIMER_MS 20
 #define GPIO_PIN_1 GPIO_NUM_25
 #define GPIO_PIN_2 GPIO_NUM_4
 
 typedef struct gpio_evt_msg
 {
-    int level;
-    int pin;
+    int64_t timestamp;
+    int32_t level;
+    int32_t pin;
 }gpio_evt_msg;
 
 extern QueueHandle_t gpio_evt_queue;

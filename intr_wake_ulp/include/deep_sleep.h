@@ -11,7 +11,7 @@
 #include "esp_sleep.h"
 
 #define SLEEP_TIMER_MS 3000
-#define WAKE_UP_INTERVAL_S 5
+#define WAKE_UP_INTERVAL_S 15
 #define S_TO_US_FACTOR 1000000
 
 #define DEEP_SLEEP

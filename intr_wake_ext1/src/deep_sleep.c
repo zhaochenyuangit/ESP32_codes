@@ -1,12 +1,14 @@
 #include "deep_sleep.h"
 #include "esp_pm.h"
+#include "ssd1306.h"
 
 static const char *TAG = "deep sleep";
 static RTC_DATA_ATTR struct timeval sleep_enter;
 static TimerHandle_t sleep_timer = NULL;
 
 static void go_sleep(void *_)
-{
+{   
+    ssd1306_displayOff();
     esp_pm_dump_locks(stdout);
 
     printf("start wake up timer\n");

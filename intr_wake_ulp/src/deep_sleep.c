@@ -10,11 +10,7 @@ static void go_sleep(void *_)
 {
 
     esp_sleep_enable_timer_wakeup(WAKE_UP_INTERVAL_S * S_TO_US_FACTOR);
-    /* Start the ULP program */
     ESP_ERROR_CHECK(esp_sleep_enable_ulp_wakeup());
-    esp_err_t err = ulp_run(&ulp_entry - RTC_SLOW_MEM);
-    ESP_ERROR_CHECK(err);
-
     gettimeofday(&sleep_enter, NULL);
     ESP_LOGI(TAG, "enters deep sleep\n");
     vTaskDelay(10);

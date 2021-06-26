@@ -44,7 +44,9 @@
 			"deep_sleep.h": "c",
 			"rtc_io_reg.h": "c",
 			"rtc_cntl_reg.h": "c",
-			"sens_reg.h": "c"
+			"sens_reg.h": "c",
+			"sdkconfig.h": "c",
+			"display.h": "c"
 		}
 	},
 	
