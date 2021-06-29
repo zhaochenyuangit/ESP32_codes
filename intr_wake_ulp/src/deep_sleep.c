@@ -1,6 +1,7 @@
 #include "deep_sleep.h"
 #include "esp32/ulp.h"
 #include "ulp_main.h"
+#include "ssd1306.h"
 
 static const char *TAG = "deep sleep";
 static RTC_DATA_ATTR struct timeval sleep_enter;
@@ -8,7 +9,7 @@ static TimerHandle_t sleep_timer = NULL;
 
 static void go_sleep(void *_)
 {
-
+    ssd1306_displayOff();
     esp_sleep_enable_timer_wakeup(WAKE_UP_INTERVAL_S * S_TO_US_FACTOR);
     ESP_ERROR_CHECK(esp_sleep_enable_ulp_wakeup());
     gettimeofday(&sleep_enter, NULL);
@@ -27,6 +28,7 @@ void print_slept_time(void)
 
 void create_sleep_timer(void)
 {
+
     sleep_timer = xTimerCreate("sleep_timer", pdMS_TO_TICKS(SLEEP_TIMER_MS), false, NULL, go_sleep);
     if (sleep_timer == NULL)
     {

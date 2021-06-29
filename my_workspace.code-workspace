@@ -46,7 +46,10 @@
 			"rtc_cntl_reg.h": "c",
 			"sens_reg.h": "c",
 			"sdkconfig.h": "c",
-			"display.h": "c"
+			"display.h": "c",
+			"ulp_wake.h": "c",
+			"rtc_io.h": "c",
+			"ssd1306.h": "c"
 		}
 	},
 	

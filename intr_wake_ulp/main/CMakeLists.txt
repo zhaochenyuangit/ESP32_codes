@@ -1,18 +1,19 @@
 idf_component_register(SRCS 
                     "main.c"    
-                    "../src/edge_intr_debounce.c"
                     "../src/deep_sleep.c"
-                    "../src/commands_corner_cases.c"
-                    "../src/my_wifi.c"
+                    "../src/ulp_wake.c"
                     "../src/my_mqtt.c"
+                    "../src/my_wifi.c"
                     "../src/sntpController.c"
+                    "../src/display.c"
                     INCLUDE_DIRS "."
 				"../src"
 				"../include"
                     REQUIRES soc 
                              nvs_flash 
                              ulp 
-                             mqtt)
+                             mqtt
+                             ssd1306)
 
 # ULP support additions to component CMakeLists.txt.
 #
@@ -22,7 +23,7 @@ set(ulp_app_name ulp_${COMPONENT_NAME})
 # 2. Specify all assembly source files.
 #    Files should be placed into a separate directory (in this case, ulp/),
 #    which should not be added to COMPONENT_SRCS.
-set(ulp_s_sources "ulp/barrier_main.S")
+set(ulp_s_sources "ulp/barrier_main.S" "ulp/stack.S")
 #
 # 3. List all the component source files which include automatically
 #    generated ULP export file, ${ulp_app_name}.h:

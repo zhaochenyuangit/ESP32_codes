@@ -71,7 +71,7 @@ esp_err_t start_mqtt(esp_mqtt_client_handle_t *client_ptr)
     esp_mqtt_client_register_event(*client_ptr, ESP_EVENT_ANY_ID, mqtt_event_handler, *client_ptr);
     esp_mqtt_client_start(*client_ptr);
     ESP_LOGI(TAG,"wait for flag");
-    EventBits_t bit = xEventGroupWaitBits(mqtt_event_group,MQTT_CONNECTED_BIT,pdFALSE,pdFALSE,portMAX_DELAY);
+    xEventGroupWaitBits(mqtt_event_group,MQTT_CONNECTED_BIT,pdFALSE,pdFALSE,portMAX_DELAY);
     
     return (ESP_OK);
 }
