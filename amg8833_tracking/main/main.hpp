@@ -1,3 +1,5 @@
+extern "C"
+{
 #include <stdio.h>
 #include "stdlib.h"
 #include <string.h>
@@ -16,10 +18,16 @@
 
 #include "network_common.h"
 #include "grideye_api_lv1.h"
-#include "cv.h"
+#include "detect.h"
+#include "feature_extraction.h"
 #include "sim_uart.h"
+#include "helper.h"
+}
 
-#define UART_SIM
+#include "human_object.hpp"
+#include "tracking.hpp"
+
+//#define UART_SIM
 #define IM_W 71
 #define IM_H 71
-#define IM_LEN (IM_W*IM_H)
+#define IM_LEN (IM_W * IM_H)

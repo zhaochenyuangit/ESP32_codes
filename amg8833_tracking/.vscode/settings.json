@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "helper.h": "c",
+        "grideye_i2c.h": "c"
+    }
+}

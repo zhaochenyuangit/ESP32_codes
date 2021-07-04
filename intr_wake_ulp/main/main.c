@@ -151,9 +151,9 @@ void app_main(void)
     {
         printf("reset count to zero\n");
         count = 0;
-        /*start_wifi();
+        start_wifi();
         initializeSntp();
-        obtainTime();*/
+        obtainTime();
         init_ulp_program();
     }
     sema = xSemaphoreCreateBinary();

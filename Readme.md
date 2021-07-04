@@ -808,6 +808,30 @@ printf("%d\n",num);
    }
    ```
 
+#### C/C++ 混编
+
+C文件用gcc编译
+
+`gcc -g -c ./lib/*.c -I ./include`
+
+C++文件用g++编译
+
+`g++ -g -c ./cpplib/*.cpp -I ./cppinclude/*.hpp`
+
+main函数所在主文件用cpp来写，引入C的头文件时要用extern "C" 保护起来
+
+```
+extern "C"{
+#include "some_C_header.h"
+}
+```
+
+main.cpp 也用g++编译，编译选项要给到所有的目标文件和所有的头文件路径
+
+`g++ -o f.exe ./main.cpp ./build/*.o -I ./include -I ./cppinclude`
+
+
+
 ## 无线数据传输
 
 Node red, [github](https://github.com/node-red/linux-installers)

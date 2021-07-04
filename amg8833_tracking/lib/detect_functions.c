@@ -1,4 +1,4 @@
-#include "cv.h"
+#include "detect.h"
 
 static const char *TAG = "CV functions";
 
@@ -65,7 +65,7 @@ struct Filter *avg_kern1d(int side)
     if (side % 2 == 0)
     {
         side = side - 1;
-        ESP_LOGW(TAG, "update avg kernel side to %d", side);
+        printf("update avg kernel side to %d\n", side);
     }
     struct Filter *f = malloc(sizeof(struct Filter));
     if (f == NULL)
@@ -173,8 +173,8 @@ int std_of_array(short *array, int size)
 /*insert 9 pixels between each pixel*/
 void interpolation71x71(short *input8x8, short *output71x71)
 {
-    const uint8_t w = SNR_SZ_X;
-    const uint8_t h = SNR_SZ_Y;
+    uint8_t w = 8;
+    uint8_t h = 8;
 
     uint16_t index;
     uint8_t col = 0;
@@ -358,7 +358,7 @@ void average_of_area(unsigned int *sum_table, short *output, int image_width, in
     if (side % 2 == 0)
     {
         side = side - 1;
-        ESP_LOGW(TAG, "avg from sum table, update side to %d", side);
+        printf("avg from sum table, update side to %d\n", side);
     }
     int radius = (side - 1) / 2;
     for (int row = 0; row < image_height; row++)

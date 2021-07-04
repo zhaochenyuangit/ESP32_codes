@@ -1,8 +1,10 @@
-#include "grideye_api_common.h"
-#include "freertos/FreeRTOS.h"
+#include "stdbool.h"
 #include "math.h"
-#include "esp_log.h"
-
+#include "stdio.h"
+#include "stdlib.h"
+#include "grideye_api_common.h"
+#include "assert.h"
+#include <stdint.h>
 
 typedef struct Filter Filter;
 typedef int (*pool_function_t)(short[], int);

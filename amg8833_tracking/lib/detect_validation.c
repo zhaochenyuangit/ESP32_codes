@@ -3,7 +3,14 @@
  * because extreamly slow speed
  * but could be use to validate result of the faster algorithms
  */
-#include "cv.h"
+#include "detect.h"
+
+struct Filter
+{
+    int *kernel;
+    int side;
+    int *weight;
+};
 
 struct Filter *gaussian_kernel_2d(double sigma)
 {

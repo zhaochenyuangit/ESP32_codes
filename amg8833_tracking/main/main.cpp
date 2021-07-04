@@ -1,4 +1,4 @@
-#include "main.h"
+#include "main.hpp"
 
 static const char *TAG = "debug";
 esp_mqtt_client_handle_t client = NULL;
@@ -9,8 +9,6 @@ static const uint8_t q_len = 5;
 SemaphoreHandle_t sema_raw = NULL;
 SemaphoreHandle_t sema_im = NULL;
 
-#include "helper.c"
-
 char pixel_msg_buf[400];
 char thms_msg_buf[20];
 char mask_msg_buf[26000];
@@ -20,7 +18,7 @@ uint8_t mask[IM_LEN];
 static short holder1[IM_LEN];
 static short holder2[IM_LEN];
 
-void blob_detection(short *raw, uint8_t *result)
+int blob_detection(short *raw, uint8_t *result)
 {
     interpolation71x71(raw, im);
     image_copy(im, holder1, IM_LEN);
@@ -31,34 +29,35 @@ void blob_detection(short *raw, uint8_t *result)
     short th = max - 2 * std;
     binary_thresholding(holder2, result, IM_LEN, &th, 1);
     binary_fill_holes(result, IM_W, IM_H);
-    for (int i = 0; i < IM_LEN; i++)
-    {
-        im[i] = im[i] * result[i];
-    }
-    average_filter(im, IM_W, IM_H, 7);
-    binary_thresholding(im, result, IM_LEN, &th, 1);
     int num = labeling8(result, IM_W, IM_H);
+    return num;
 }
 
 void image_process(void *_)
 {
     short pixel_value[SNR_SZ];
     char performance_msg_buf[10];
+    char count_msg_buf[10];
+    ObjectList tracking;
     while (1)
     {
         if (xQueueReceive(q_pixels, &pixel_value, portMAX_DELAY) == pdTRUE)
         {
             performance_evaluation(0);
-            array8x8_to_string(pixel_value, pixel_msg_buf);
+            sh_array_to_string(pixel_value, pixel_msg_buf, SNR_SZ);
             xSemaphoreGive(sema_raw);
+            int n_blobs = blob_detection(pixel_value, mask);
 
-            blob_detection(pixel_value, mask);
-            //array71x71_to_string(holder1,mask_msg_buf);
-
-            mask71x71_to_string(mask, mask_msg_buf);
+            //c_array_to_string(mask, mask_msg_buf, IM_LEN);
             //xSemaphoreGive(sema_im);
+            Blob *blob_list = extract_feature(mask, n_blobs, IM_W, IM_H);
+            tracking.matching(blob_list, n_blobs);
+            delete_blob_list(blob_list, n_blobs);
+
             sprintf(performance_msg_buf, "%.2f", performance_evaluation(1));
             mqtt_send(client, "amg8833/speed", performance_msg_buf);
+            sprintf(count_msg_buf, "%d", tracking.get_count());
+            mqtt_send(client, "amg8833/count", count_msg_buf);
         }
         //vTaskDelay(100 / portTICK_PERIOD_MS);
     }
@@ -93,27 +92,53 @@ void pub_im(void *_)
 }
 
 #ifndef UART_SIM
+int detect_activation(short *pixels, short thms, UCHAR *mask)
+{
+    int count = 0;
+    memset(mask, 0, SNR_SZ);
+    short low_b = thms - 2.5 * 256;
+    for (int i = 0; i < SNR_SZ; i++)
+    {
+        if (pixels[i] > low_b)
+        {
+            mask[i] = pdTRUE;
+            count++;
+        }
+    }
+    return count;
+}
+
 void read_grideye(void *parameter)
 {
     short pixel_value[SNR_SZ];
     short thms_value;
+    int no_activate_frame = 0;
     while (1)
     {
         read_pixels(pixel_value);
         read_thermistor(&thms_value);
         int count = detect_activation(pixel_value, thms_value, mask);
-        if (count)
+        if (!count)
         {
-            if (xQueueSend(q_pixels, &pixel_value, 10) != pdTRUE)
-            {
-                ESP_LOGI(TAG, "queue pixel is full");
-            }
-            if (xQueueSend(q_thms, &thms_value, 10) != pdTRUE)
-            {
-                ESP_LOGI(TAG, "queue thms is full");
-            }
+            no_activate_frame += 1;
         }
-
+        else
+        {
+            no_activate_frame = 0;
+        }
+        if (no_activate_frame > 5)
+        {
+            vTaskDelay(100 / portTICK_PERIOD_MS);
+            continue;
+        }
+        if (xQueueSend(q_pixels, &pixel_value, 10) != pdTRUE)
+        {
+            ESP_LOGI(TAG, "queue pixel is full");
+        }
+        if (xQueueSend(q_thms, &thms_value, 10) != pdTRUE)
+        {
+            ESP_LOGI(TAG, "queue thms is full");
+        }
         //printf("task read watermark: %d\n", uxTaskGetStackHighWaterMark(NULL));
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
@@ -136,7 +161,7 @@ void pub_thms(void *_)
 }
 #endif
 
-void app_main(void)
+extern "C" void app_main(void)
 {
 #ifdef UART_SIM
     printf("main programm start\n");
