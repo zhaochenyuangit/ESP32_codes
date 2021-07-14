@@ -1,4 +1,5 @@
 #include "detect.h"
+#include "image_size.h"
 
 void image_copy(short *src, short *dst, int size)
 {
@@ -18,6 +19,7 @@ void mask_copy(uint8_t *src, uint8_t *dst, int size)
 
 int labeling8(uint8_t *mask, int width, int height)
 {
+    static uint16_t search_list[IM_LEN];
     if ((width > 256) || (height > 256))
     {
         printf("ERROR: grideye api support image size up to uint8_t\n");
@@ -34,13 +36,12 @@ int labeling8(uint8_t *mask, int width, int height)
         }
     }
     uint16_t area_min = 50;
-    uint16_t *search_list = malloc(sizeof(uint16_t) * (width * height));
+    
     if (search_list == NULL)
     {
         return -1;
     }
     uint8_t num = ucAMG_PUB_ODT_CalcDataLabeling8((uint8_t)width, (uint8_t)height, mark, area_min, mask, search_list);
-    free(search_list);
     return num;
 }
 

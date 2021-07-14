@@ -41,10 +41,14 @@ void print_blob_mask(Blob *blob_list, int n_blobs, short *holder, int w, int h)
 
 struct Blob *extract_feature(uint8_t *labeled, int n_blobs, int img_w, int img_h)
 {
+    if (n_blobs == 0)
+    {
+        return NULL;
+    }
     struct Blob *blob_list = malloc(sizeof(struct Blob) * n_blobs);
     if (blob_list == NULL)
     {
-        printf("extract_feature malloc failed\n");
+        printf("extract_feature blob list malloc failed\n");
         return NULL;
     }
     for (int num = 1; num <= n_blobs; num++)
@@ -52,7 +56,7 @@ struct Blob *extract_feature(uint8_t *labeled, int n_blobs, int img_w, int img_h
         uint8_t *submask = malloc(sizeof(uint8_t) * (img_w * img_h));
         if (submask == NULL)
         {
-            printf("extract feature malloc failed\n");
+            printf("extract feature sub mask malloc failed\n");
             free(blob_list);
             return NULL;
         }

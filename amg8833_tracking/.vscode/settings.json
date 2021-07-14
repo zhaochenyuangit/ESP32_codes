@@ -1,6 +1,9 @@
 {
     "files.associations": {
         "helper.h": "c",
-        "grideye_i2c.h": "c"
+        "grideye_i2c.h": "c",
+        "network_common.h": "c",
+        "feature_extraction.h": "c",
+        "image_size.h": "c"
     }
 }

@@ -26,8 +26,6 @@ extern "C"
 
 #include "human_object.hpp"
 #include "tracking.hpp"
+#include "image_size.h"
 
 //#define UART_SIM
-#define IM_W 71
-#define IM_H 71
-#define IM_LEN (IM_W * IM_H)

@@ -15,11 +15,11 @@ char mask_msg_buf[26000];
 
 short im[IM_LEN];
 uint8_t mask[IM_LEN];
-static short holder1[IM_LEN];
-static short holder2[IM_LEN];
 
 int blob_detection(short *raw, uint8_t *result)
 {
+    static short holder1[IM_LEN];
+    static short holder2[IM_LEN];
     interpolation71x71(raw, im);
     image_copy(im, holder1, IM_LEN);
     average_filter(holder1, IM_W, IM_H, 35);
@@ -96,7 +96,7 @@ int detect_activation(short *pixels, short thms, UCHAR *mask)
 {
     int count = 0;
     memset(mask, 0, SNR_SZ);
-    short low_b = thms - 2.5 * 256;
+    short low_b = 6000; // thms - 3 * 256;
     for (int i = 0; i < SNR_SZ; i++)
     {
         if (pixels[i] > low_b)
@@ -112,13 +112,13 @@ void read_grideye(void *parameter)
 {
     short pixel_value[SNR_SZ];
     short thms_value;
-    int no_activate_frame = 0;
+    int no_activate_frame = 10;
     while (1)
     {
         read_pixels(pixel_value);
         read_thermistor(&thms_value);
         int count = detect_activation(pixel_value, thms_value, mask);
-        if (!count)
+        if (count<=5)
         {
             no_activate_frame += 1;
         }
@@ -126,18 +126,17 @@ void read_grideye(void *parameter)
         {
             no_activate_frame = 0;
         }
-        if (no_activate_frame > 5)
+        if (no_activate_frame <= 10)
         {
-            vTaskDelay(100 / portTICK_PERIOD_MS);
-            continue;
-        }
-        if (xQueueSend(q_pixels, &pixel_value, 10) != pdTRUE)
-        {
-            ESP_LOGI(TAG, "queue pixel is full");
-        }
-        if (xQueueSend(q_thms, &thms_value, 10) != pdTRUE)
-        {
-            ESP_LOGI(TAG, "queue thms is full");
+
+            if (xQueueSend(q_pixels, &pixel_value, 10) != pdTRUE)
+            {
+                ESP_LOGI(TAG, "queue pixel is full");
+            }
+            if (xQueueSend(q_thms, &thms_value, 10) != pdTRUE)
+            {
+                ESP_LOGI(TAG, "queue thms is full");
+            }
         }
         //printf("task read watermark: %d\n", uxTaskGetStackHighWaterMark(NULL));
         vTaskDelay(100 / portTICK_PERIOD_MS);
