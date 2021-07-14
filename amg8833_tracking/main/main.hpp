@@ -28,4 +28,4 @@ extern "C"
 #include "tracking.hpp"
 #include "image_size.h"
 
-//#define UART_SIM
+#define UART_SIM

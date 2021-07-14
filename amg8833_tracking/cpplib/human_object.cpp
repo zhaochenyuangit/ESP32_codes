@@ -2,11 +2,11 @@
 
 int HumanObject::serial_num_ = 0;
 
-HumanObject::HumanObject(int label, int pos_x, int pos_y, int size)
+HumanObject::HumanObject(int blob_label, int pos_x, int pos_y, int size)
 {
     serial_num_ += 1;
     label_ = serial_num_;
-    printf("create object %d from Blob %d at %d %d\n", label_, label, pos_x, pos_y);
+    printf("create object %d from Blob %d at %d %d\n", label_, blob_label, pos_x, pos_y);
     pos_x_ = pos_x;
     pos_y_ = pos_y;
     first_x_ = pos_x;
@@ -31,11 +31,11 @@ void HumanObject::ab_filter(int pos_x, int pos_y)
 
 void HumanObject::update(int pos_x, int pos_y, int size)
 {
-    printf("before pos: %d, %d vel: %d,%d\n",pos_x_,pos_y_,vel_x_,vel_y_);
+    printf("before pos: (%d %d) vel: (%d %d)\n", pos_x_, pos_y_, vel_x_, vel_y_);
     ab_filter(pos_x, pos_y);
     last_size_ = size_;
     size_ = size;
-    printf("after pos %d, %d vel %d, %d\n",pos_x_,pos_y_,vel_x_,vel_y_);
+    printf("after pos (%d %d) vel (%d %d)\n", pos_x_, pos_y_, vel_x_, vel_y_);
 }
 
 void HumanObject::predict(int *ppos_x, int *ppos_y)
@@ -57,6 +57,13 @@ void HumanObject::get_shift(int *first_x, int *first_y, int *now_x, int *now_y)
     *now_y = pos_y_;
 }
 
-int HumanObject::get_index(){
+int HumanObject::get_index()
+{
     return label_;
+}
+
+void HumanObject::get_size(int *size, int *last)
+{
+    *size = size_;
+    *last = last_size_;
 }

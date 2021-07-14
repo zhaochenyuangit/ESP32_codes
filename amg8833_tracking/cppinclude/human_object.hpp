@@ -28,4 +28,5 @@ public:
     void predict(int *ppos_x, int *ppos_y);
     void get_shift(int *first_x, int *first_y, int *now_x, int *now_y);
     int get_index();
+    void get_size(int *size, int *last_size);
 };

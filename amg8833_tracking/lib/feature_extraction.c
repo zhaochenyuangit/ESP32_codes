@@ -1,4 +1,5 @@
 #include "feature_extraction.h"
+#include "image_size.h"
 
 static uint32_t calc_centroid(uint8_t *mask, int width, int height, uint32_t *centroid_index);
 static void chamfer_distance_transform(uint8_t *mask, int width, int height, int a, int b);
@@ -53,20 +54,13 @@ struct Blob *extract_feature(uint8_t *labeled, int n_blobs, int img_w, int img_h
     }
     for (int num = 1; num <= n_blobs; num++)
     {
-        uint8_t *submask = malloc(sizeof(uint8_t) * (img_w * img_h));
-        if (submask == NULL)
-        {
-            printf("extract feature sub mask malloc failed\n");
-            free(blob_list);
-            return NULL;
-        }
-        for (int i = 0; i < (img_w * img_h); i++)
+        static uint8_t submask[IM_LEN];
+        for (int i = 0; i < IM_LEN; i++)
         {
             submask[i] = (labeled[i] == num) ? 1 : 0;
         }
         blob_list[num - 1].size = calc_centroid(submask, img_w, img_h, &blob_list[num - 1].centroid_index);
         blob_list[num - 1].n_central_points = calc_centrals(submask, img_w, img_h, &blob_list[num - 1].central_index_list, &blob_list[num - 1].central_distance_list);
-        free(submask);
     }
     return blob_list;
 }
@@ -79,6 +73,14 @@ struct Blob *extract_feature(uint8_t *labeled, int n_blobs, int img_w, int img_h
  */
 static int calc_centrals(uint8_t *submask, int width, int height, uint32_t **location_list_ptr, uint8_t **distance_list_ptr)
 {
+    const float percentage = 0.76;
+    //even if the blob occpies the whole FOV it can only have so many central points
+    enum
+    {
+        max_pixels = (int)((IM_H * (1 - percentage) + 2) * (IM_W * (1 - percentage) + 2)),
+    };
+    static uint32_t location_list_largest[max_pixels];
+    static uint8_t distance_list_largest[max_pixels];
     chamfer_dt_city(submask, width, height);
     //calculate max distance
     int max_loc = 0;
@@ -89,24 +91,16 @@ static int calc_centrals(uint8_t *submask, int width, int height, uint32_t **loc
             max_loc = i;
         }
     }
-    int threshold = submask[max_loc] * 0.76;
+    int threshold = submask[max_loc] * percentage;
     //calculate number of central points
-    uint32_t *location_list_largest = malloc(sizeof(uint32_t) * (width * height));
-    if (location_list_largest == NULL)
-    {
-        printf("calc_centrals malloc failed!\n");
-        return (-1);
-    }
-    uint8_t *distance_list_largest = malloc(sizeof(uint8_t) * (width * height));
-    if (distance_list_largest == NULL)
-    {
-        printf("calc_centrals malloc failed!\n");
-        free(location_list_largest);
-        return (-1);
-    }
     int n_points = 0;
     for (int i = 0; i < (width * height); i++)
     {
+        if (n_points >= max_pixels)
+        {
+            printf("more pixels than expected\n");
+            break;
+        }
         if (submask[i] > threshold)
         {
             location_list_largest[n_points] = i;
@@ -114,10 +108,9 @@ static int calc_centrals(uint8_t *submask, int width, int height, uint32_t **loc
             n_points++;
         }
     }
+    //if blob is too small, do not calculate central points
     if (n_points < 10)
     {
-        free(location_list_largest);
-        free(distance_list_largest);
         *location_list_ptr = NULL;
         *distance_list_ptr = NULL;
         return n_points;
@@ -126,16 +119,12 @@ static int calc_centrals(uint8_t *submask, int width, int height, uint32_t **loc
     if (*location_list_ptr == NULL)
     {
         printf("calc_centrals malloc failed!\n");
-        free(location_list_largest);
-        free(distance_list_largest);
         return (-1);
     }
     *distance_list_ptr = malloc(sizeof(uint8_t) * n_points);
     if (*distance_list_ptr == NULL)
     {
         printf("calc_centrals malloc failed!\n");
-        free(location_list_largest);
-        free(distance_list_largest);
         free(*location_list_ptr);
         return (-1);
     }
@@ -144,8 +133,6 @@ static int calc_centrals(uint8_t *submask, int width, int height, uint32_t **loc
         (*location_list_ptr)[i] = location_list_largest[i];
         (*distance_list_ptr)[i] = distance_list_largest[i];
     }
-    free(location_list_largest);
-    free(distance_list_largest);
     return n_points;
 }
 
@@ -291,6 +278,10 @@ static uint32_t calc_centroid(uint8_t *mask, int width, int height, uint32_t *ce
 /* full destroy a blob list */
 void delete_blob_list(Blob *blob_list, int n_blobs)
 {
+    if ((n_blobs == 0) || (blob_list == NULL))
+    {
+        return;
+    }
     for (int i = 0; i < n_blobs; i++)
     {
         if (blob_list[i].central_distance_list)

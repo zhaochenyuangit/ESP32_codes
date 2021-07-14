@@ -53,6 +53,7 @@ void image_process(void *_)
             Blob *blob_list = extract_feature(mask, n_blobs, IM_W, IM_H);
             tracking.matching(blob_list, n_blobs);
             delete_blob_list(blob_list, n_blobs);
+            printf("\n");
 
             sprintf(performance_msg_buf, "%.2f", performance_evaluation(1));
             mqtt_send(client, "amg8833/speed", performance_msg_buf);

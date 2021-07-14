@@ -1,4 +1,10 @@
 #include "tracking.hpp"
+#include "image_size.h"
+
+static inline int distance_l1(int x1, int x2, int y1, int y2)
+{
+    return (abs(x1 - x2) + abs(y1 - y2));
+}
 
 ObjectList::ObjectList()
 {
@@ -24,12 +30,29 @@ ObjectList::~ObjectList()
     }
 }
 
+int ObjectList::get_n_objects()
+{
+    return n_ob;
+}
+
+ObjectNode *ObjectList::get_head_node()
+{
+    return head;
+}
+
+int ObjectList::get_count()
+{
+    return count;
+}
+
 bool ObjectList::append_object(HumanObject *ob)
 {
     printf("insert Object\n");
     ObjectNode *node = new ObjectNode;
     if (node == NULL)
     {
+        printf("fatal! malloc object node failed\n");
+        ob->~HumanObject();
         return 1;
     }
     node->ob = ob;
@@ -40,7 +63,7 @@ bool ObjectList::append_object(HumanObject *ob)
     return 0;
 }
 
-bool ObjectList::delete_object(int label)
+bool ObjectList::delete_object_by_label(int label)
 {
     printf("try deleting object %d\n", label);
     p = head;
@@ -72,18 +95,35 @@ bool ObjectList::delete_object(int label)
     return 0;
 }
 
-int ObjectList::get_n_objects()
+bool ObjectList::count_and_delete_every_objects()
 {
-    return n_ob;
+    p = head->next;
+    while (p)
+    {
+        ObjectNode *to_delete = p;
+        p = p->next;
+        count_an_object_before_delete(to_delete);
+        to_delete->ob->~HumanObject();
+        delete to_delete;
+    }
+    return 0;
 }
 
-ObjectNode *ObjectList::get_head_node()
+void ObjectList::count_an_object_before_delete(ObjectNode *p)
 {
-    return head;
-}
-
-int ObjectList::get_count(){
-    return count;
+    static const int bondary = (IM_H - 1) / 2;
+    int first_x, now_x, first_y, now_y;
+    p->ob->get_shift(&first_x, &first_y, &now_x, &now_y);
+    if ((first_y < bondary) && (now_y > bondary))
+    {
+        printf("count +1\n");
+        count += 1;
+    }
+    else if ((first_y > bondary) && (now_y < bondary))
+    {
+        printf("count -1\n");
+        count -= 1;
+    }
 }
 
 int ObjectList::match_centroid(HumanObject *ob, Blob *blob_list, int n_blobs)
@@ -98,9 +138,9 @@ int ObjectList::match_centroid(HumanObject *ob, Blob *blob_list, int n_blobs)
     for (int i = 1; i <= n_blobs; i++)
     {
         Blob blob = blob_list[i - 1];
-        int blob_x = blob.centroid_index % 71;
-        int blob_y = blob.centroid_index / 71;
-        int distance = abs(ob_x - blob_x) + abs(ob_y - blob_y);
+        int blob_x = blob.centroid_index % IM_W;
+        int blob_y = blob.centroid_index / IM_W;
+        int distance = distance_l1(blob_x, ob_x, blob_y, ob_y);
         if (distance <= 25)
         {
             printf("match object %d with blob %d centroid\n", ob->get_index(), i);
@@ -134,20 +174,20 @@ int ObjectList::match_centrals(HumanObject *ob, Blob *blob_list, int n_blobs)
         int16_t *central_y = (int16_t *)malloc(sizeof(int16_t) * blob.n_central_points);
         for (int i = 0; i < blob.n_central_points; i++)
         {
-            central_x[i] = blob.central_index_list[i] % 71;
-            central_y[i] = blob.central_index_list[i] / 71;
+            central_x[i] = blob.central_index_list[i] % IM_W;
+            central_y[i] = blob.central_index_list[i] / IM_W;
         }
         int min_loc = 0;
+        int dist_min = distance_l1(central_x[0], ob_x, central_y[0], ob_y);
         for (int i = 1; i < blob.n_central_points; i++)
         {
-            int dist_i = abs(central_x[i] - ob_x) + abs(central_y[i] - ob_y);
-            int dist_min = abs(central_x[min_loc] - ob_x) + abs(central_y[min_loc] - ob_y);
+            int dist_i = distance_l1(central_x[i], ob_x, central_y[i], ob_y);
             if (dist_i < dist_min)
             {
                 min_loc = i;
+                dist_min = dist_i;
             }
         }
-        int dist_min = abs(central_x[min_loc] - ob_x) + abs(central_y[min_loc] - ob_y);
         printf("dist min %d, %d, loc %d %d\n", dist_min, min_loc, central_x[min_loc], central_y[min_loc]);
         if (dist_min < 15)
         {
@@ -168,6 +208,11 @@ int ObjectList::match_centrals(HumanObject *ob, Blob *blob_list, int n_blobs)
 
 void ObjectList::matching(Blob *blob_list, int n_blobs)
 {
+    if ((n_blobs == 0) || (blob_list == NULL))
+    {
+        count_and_delete_every_objects();
+        return;
+    }
     bool *matched_flag = (bool *)malloc(sizeof(bool) * n_blobs);
     for (int i = 0; i < n_blobs; i++)
     {
@@ -191,23 +236,52 @@ void ObjectList::matching(Blob *blob_list, int n_blobs)
             p = p->next;
             continue;
         }
+
         /* if an object is not matched with any blob then delete it*/
-        int first_x, now_x, first_y, now_y;
-        p->ob->get_shift(&first_x, &first_y, &now_x, &now_y);
-        if ((first_y < 35) && (now_y > 35))
-        {
-            printf("count +1\n");
-            count += 1;
-        }
-        else if ((first_y > 35) && (now_y < 35))
-        {
-            printf("count -1\n");
-            count -= 1;
-        }
+        count_an_object_before_delete(p);
         int label = p->ob->get_index();
-        delete_object(label);
+        delete_object_by_label(label);
         p = p->next;
     }
+
+    /* check if small blobs could be a fraction from a large blob in previous frame,
+        if so, regester it to a existing object*/
+    for (int i = 0; i < n_blobs; i++)
+    {
+        if (matched_flag[i])
+        {
+            continue;
+        }
+        uint32_t blob_loc = blob_list[i].centroid_index;
+        int blob_x = blob_loc % IM_W;
+        int blob_y = blob_loc / IM_W;
+        int blob_sz = blob_list[i].size;
+        p = head->next;
+        while (p)
+        {
+            ObjectNode *node = p;
+            p = p->next;
+            int ob_x, ob_y;
+            node->ob->predict(&ob_x, &ob_y);
+            int distance = distance_l1(ob_x, blob_x, ob_y, blob_y);
+            int ob_sz, last_sz;
+            node->ob->get_size(&ob_sz, &last_sz);
+            int total_size = (blob_sz + ob_sz);
+            int size_score = last_sz - total_size;
+            if ((distance < 60) && (size_score < 300) && (size_score > 0))
+            {
+                printf("regester blob %d to object %d\n", i + 1, node->ob->get_index());
+                int blob_weight = blob_sz / total_size;
+                int ob_weight = ob_sz / total_size;
+                int merged_pos_x = blob_weight * blob_x + ob_weight * ob_x;
+                int merged_pos_y = blob_weight * blob_y + ob_weight * ob_y;
+                node->ob->update(merged_pos_x,merged_pos_y,total_size);
+                matched_flag[i] = true;
+                break;
+            }
+        }
+    }
+
     /* spawn new object from unmatched blobs*/
     for (int i = 0; i < n_blobs; i++)
     {
@@ -217,8 +291,8 @@ void ObjectList::matching(Blob *blob_list, int n_blobs)
         }
         Blob blob = blob_list[i];
         int pos_x, pos_y;
-        pos_x = blob.centroid_index % 71;
-        pos_y = blob.centroid_index / 71;
+        pos_x = blob.centroid_index % IM_W;
+        pos_y = blob.centroid_index / IM_W;
         HumanObject *ob = new HumanObject(i + 1, pos_x, pos_y, blob.size);
         append_object(ob);
     }
