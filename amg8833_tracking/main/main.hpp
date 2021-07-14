@@ -29,3 +29,4 @@ extern "C"
 #include "image_size.h"
 
 #define UART_SIM
+//#define ENABLE_NETWORK

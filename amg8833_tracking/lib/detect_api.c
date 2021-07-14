@@ -35,7 +35,7 @@ int labeling8(uint8_t *mask, int width, int height)
             mask[i] = mark;
         }
     }
-    uint16_t area_min = 50;
+    uint16_t area_min = 20;
     uint8_t num = ucAMG_PUB_ODT_CalcDataLabeling8((uint8_t)width, (uint8_t)height, mark, area_min, mask, search_list);
     return num;
 }

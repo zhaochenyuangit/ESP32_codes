@@ -4,7 +4,6 @@ static const char *TAG = "debug";
 esp_mqtt_client_handle_t client = NULL;
 xQueueHandle q_pixels = NULL;
 xQueueHandle q_thms = NULL;
-xQueueHandle q_speed = NULL;
 static const uint8_t q_len = 5;
 SemaphoreHandle_t sema_raw = NULL;
 SemaphoreHandle_t sema_im = NULL;
@@ -53,12 +52,16 @@ void image_process(void *_)
             Blob *blob_list = extract_feature(mask, n_blobs, IM_W, IM_H);
             tracking.matching(blob_list, n_blobs);
             delete_blob_list(blob_list, n_blobs);
-            printf("\n");
 
+#ifdef ENABLE_NETWORK
             sprintf(performance_msg_buf, "%.2f", performance_evaluation(1));
             mqtt_send(client, "amg8833/speed", performance_msg_buf);
             sprintf(count_msg_buf, "%d", tracking.get_count());
             mqtt_send(client, "amg8833/count", count_msg_buf);
+#else
+            printf("count %d\n\n", tracking.get_count());
+
+#endif
         }
         //vTaskDelay(100 / portTICK_PERIOD_MS);
     }
@@ -71,7 +74,9 @@ void pub_raw(void *_)
     {
         if (xSemaphoreTake(sema_raw, portMAX_DELAY) == pdTRUE)
         {
+#ifdef ENABLE_NETWORK
             mqtt_send(client, topic, pixel_msg_buf);
+#endif
         }
         //printf("task pub watermark: %d\n", uxTaskGetStackHighWaterMark(NULL));
         //vTaskDelay(100 / portTICK_PERIOD_MS);
@@ -85,7 +90,9 @@ void pub_im(void *_)
     {
         if (xSemaphoreTake(sema_im, portMAX_DELAY) == pdTRUE)
         {
+#ifdef ENABLE_NETWORK
             mqtt_send(client, topic, mask_msg_buf);
+#endif
         }
         //printf("task pub watermark: %d\n", uxTaskGetStackHighWaterMark(NULL));
         //vTaskDelay(100 / portTICK_PERIOD_MS);
@@ -119,7 +126,7 @@ void read_grideye(void *parameter)
         read_pixels(pixel_value);
         read_thermistor(&thms_value);
         int count = detect_activation(pixel_value, thms_value, mask);
-        if (count<=5)
+        if (count <= 5)
         {
             no_activate_frame += 1;
         }
@@ -169,11 +176,12 @@ extern "C" void app_main(void)
 #else
     i2c_master_init();
 #endif
+#ifdef ENABLE_NETWORK
     start_wifi();
     start_mqtt(&client);
+#endif
     q_pixels = xQueueCreate(q_len, sizeof(short[SNR_SZ]));
     q_thms = xQueueCreate(q_len, sizeof(short));
-    q_speed = xQueueCreate(q_len, sizeof(double));
     if (q_pixels == NULL)
     {
         ESP_LOGE(TAG, "create pixels queue failed");
@@ -181,10 +189,6 @@ extern "C" void app_main(void)
     if (q_thms == NULL)
     {
         ESP_LOGE(TAG, "create thms queue failed");
-    }
-    if (q_speed == NULL)
-    {
-        ESP_LOGE(TAG, "create performance queue failed");
     }
     sema_raw = xSemaphoreCreateBinary();
     sema_im = xSemaphoreCreateBinary();

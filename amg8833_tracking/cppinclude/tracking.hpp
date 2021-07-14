@@ -25,7 +25,6 @@ private:
     bool append_object(HumanObject *ob);
     bool delete_object_by_label(int label);
     bool count_and_delete_every_objects();
-    void count_an_object_before_delete(ObjectNode *p);
 
 public:
     ObjectList();

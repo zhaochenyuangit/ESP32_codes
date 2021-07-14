@@ -9,6 +9,7 @@ static inline int distance_l1(int x1, int x2, int y1, int y2)
 ObjectList::ObjectList()
 {
     printf("init tracking...\n");
+    count = 0;
     n_ob = 0;
     ObjectNode *node = new ObjectNode;
     head = node;
@@ -98,32 +99,17 @@ bool ObjectList::delete_object_by_label(int label)
 bool ObjectList::count_and_delete_every_objects()
 {
     p = head->next;
+    head->next = NULL;
+    tail = head;
     while (p)
     {
         ObjectNode *to_delete = p;
         p = p->next;
-        count_an_object_before_delete(to_delete);
+        to_delete->ob->counting();
         to_delete->ob->~HumanObject();
         delete to_delete;
     }
     return 0;
-}
-
-void ObjectList::count_an_object_before_delete(ObjectNode *p)
-{
-    static const int bondary = (IM_H - 1) / 2;
-    int first_x, now_x, first_y, now_y;
-    p->ob->get_shift(&first_x, &first_y, &now_x, &now_y);
-    if ((first_y < bondary) && (now_y > bondary))
-    {
-        printf("count +1\n");
-        count += 1;
-    }
-    else if ((first_y > bondary) && (now_y < bondary))
-    {
-        printf("count -1\n");
-        count -= 1;
-    }
 }
 
 int ObjectList::match_centroid(HumanObject *ob, Blob *blob_list, int n_blobs)
@@ -210,6 +196,7 @@ void ObjectList::matching(Blob *blob_list, int n_blobs)
 {
     if ((n_blobs == 0) || (blob_list == NULL))
     {
+        printf("detected 0 blob, delete every object\n");
         count_and_delete_every_objects();
         return;
     }
@@ -238,7 +225,9 @@ void ObjectList::matching(Blob *blob_list, int n_blobs)
         }
 
         /* if an object is not matched with any blob then delete it*/
-        count_an_object_before_delete(p);
+        int relative_count = p->ob->counting();
+        printf("count %2d\n", relative_count);
+        count += relative_count;
         int label = p->ob->get_index();
         delete_object_by_label(label);
         p = p->next;
@@ -270,12 +259,13 @@ void ObjectList::matching(Blob *blob_list, int n_blobs)
             int size_score = last_sz - total_size;
             if ((distance < 60) && (size_score < 300) && (size_score > 0))
             {
-                printf("regester blob %d to object %d\n", i + 1, node->ob->get_index());
-                int blob_weight = blob_sz / total_size;
-                int ob_weight = ob_sz / total_size;
+                printf("regester blob %d at (%d %d) with size %d to object %d\n", i + 1, blob_x,blob_y,blob_sz,node->ob->get_index());
+                float blob_weight = (float)blob_sz / total_size;
+                float ob_weight = (float)ob_sz / total_size;
+                printf("debug blob w %f, ob w%f\n",blob_weight,ob_weight);
                 int merged_pos_x = blob_weight * blob_x + ob_weight * ob_x;
                 int merged_pos_y = blob_weight * blob_y + ob_weight * ob_y;
-                node->ob->update(merged_pos_x,merged_pos_y,total_size);
+                node->ob->update(merged_pos_x, merged_pos_y, total_size);
                 matched_flag[i] = true;
                 break;
             }

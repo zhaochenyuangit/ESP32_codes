@@ -1,4 +1,5 @@
 #include "human_object.hpp"
+#include "image_size.h"
 
 int HumanObject::serial_num_ = 0;
 
@@ -31,17 +32,36 @@ void HumanObject::ab_filter(int pos_x, int pos_y)
 
 void HumanObject::update(int pos_x, int pos_y, int size)
 {
-    printf("before pos: (%d %d) vel: (%d %d)\n", pos_x_, pos_y_, vel_x_, vel_y_);
+    int last_x = pos_x_;
+    int last_y = pos_y_;
+    int last_vx = vel_x_;
+    int last_vy = vel_y_;
     ab_filter(pos_x, pos_y);
     last_size_ = size_;
     size_ = size;
-    printf("after pos (%d %d) vel (%d %d)\n", pos_x_, pos_y_, vel_x_, vel_y_);
+    printf("pos (%d %d)->(%d %d) vel (%d %d)->(%d %d) sz %d->%d\n", last_x,last_y, pos_x_, pos_y_,last_vx, last_vy, vel_x_, vel_y_,last_size_,size_);
 }
 
 void HumanObject::predict(int *ppos_x, int *ppos_y)
 {
     *ppos_x = pos_x_ + vel_x_;
     *ppos_y = pos_y_ + vel_y_;
+}
+
+int HumanObject::counting()
+{
+    static const int bondary = (IM_H - 1) / 2;
+    int first_x, now_x, first_y, now_y;
+    get_shift(&first_x, &first_y, &now_x, &now_y);
+    if ((first_y < bondary) && (now_y > bondary))
+    {
+        return 1;
+    }
+    else if ((first_y > bondary) && (now_y < bondary))
+    {
+        return -1;
+    }
+    return 0;
 }
 
 HumanObject::~HumanObject()
