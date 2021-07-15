@@ -22,13 +22,7 @@ ObjectList::ObjectList()
 ObjectList::~ObjectList()
 {
     printf("destroy tracking...");
-    while (head)
-    {
-        p = head->next;
-        head->ob->~HumanObject();
-        delete head;
-        head = p;
-    }
+    count_and_delete_every_objects();
 }
 
 int ObjectList::get_n_objects()
@@ -44,6 +38,12 @@ ObjectNode *ObjectList::get_head_node()
 int ObjectList::get_count()
 {
     return count;
+}
+
+void ObjectList::reset_count()
+{
+    printf("manually reset count to 0\n");
+    count = 0;
 }
 
 bool ObjectList::append_object(HumanObject *ob)
@@ -105,10 +105,14 @@ bool ObjectList::count_and_delete_every_objects()
     {
         ObjectNode *to_delete = p;
         p = p->next;
-        to_delete->ob->counting();
-        to_delete->ob->~HumanObject();
+        count += to_delete->ob->counting();
+        if (to_delete->ob)
+        {
+            to_delete->ob->~HumanObject();
+        }
         delete to_delete;
     }
+    n_ob = 0;
     return 0;
 }
 
@@ -259,10 +263,10 @@ void ObjectList::matching(Blob *blob_list, int n_blobs)
             int size_score = last_sz - total_size;
             if ((distance < 60) && (size_score < 300) && (size_score > 0))
             {
-                printf("regester blob %d at (%d %d) with size %d to object %d\n", i + 1, blob_x,blob_y,blob_sz,node->ob->get_index());
+                printf("regester blob %d at (%d %d) with size %d to object %d\n", i + 1, blob_x, blob_y, blob_sz, node->ob->get_index());
                 float blob_weight = (float)blob_sz / total_size;
                 float ob_weight = (float)ob_sz / total_size;
-                printf("debug blob w %f, ob w%f\n",blob_weight,ob_weight);
+                printf("debug blob w %f, ob w%f\n", blob_weight, ob_weight);
                 int merged_pos_x = blob_weight * blob_x + ob_weight * ob_x;
                 int merged_pos_y = blob_weight * blob_y + ob_weight * ob_y;
                 node->ob->update(merged_pos_x, merged_pos_y, total_size);

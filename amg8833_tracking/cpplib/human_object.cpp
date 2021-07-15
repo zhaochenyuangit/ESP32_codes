@@ -51,13 +51,12 @@ void HumanObject::predict(int *ppos_x, int *ppos_y)
 int HumanObject::counting()
 {
     static const int bondary = (IM_H - 1) / 2;
-    int first_x, now_x, first_y, now_y;
-    get_shift(&first_x, &first_y, &now_x, &now_y);
-    if ((first_y < bondary) && (now_y > bondary))
+    printf("finish count of ob %d, %d->%d\n",label_,first_y_,pos_y_);
+    if ((first_y_ < bondary) && (pos_y_ > bondary))
     {
         return 1;
     }
-    else if ((first_y > bondary) && (now_y < bondary))
+    else if ((first_y_ > bondary) && (pos_y_ < bondary))
     {
         return -1;
     }

@@ -4,6 +4,9 @@
         "grideye_i2c.h": "c",
         "network_common.h": "c",
         "feature_extraction.h": "c",
-        "image_size.h": "c"
+        "image_size.h": "c",
+        "chrono": "cpp",
+        "random": "cpp",
+        "limits": "cpp"
     }
 }

@@ -4,6 +4,9 @@
 static const char *TAG = "MQTT";
 static EventGroupHandle_t mqtt_event_group;
 
+static const char *listen_topic = NULL;
+static QueueHandle_t interface_q = NULL;
+
 static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
 {
     esp_mqtt_client_handle_t client = event->client;
@@ -13,7 +16,7 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
     {
     case MQTT_EVENT_CONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
-        xEventGroupSetBits(mqtt_event_group,MQTT_CONNECTED_BIT);
+        xEventGroupSetBits(mqtt_event_group, MQTT_CONNECTED_BIT);
         break;
     case MQTT_EVENT_DISCONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
@@ -30,8 +33,20 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event)
         break;
     case MQTT_EVENT_DATA:
         ESP_LOGI(TAG, "MQTT_EVENT_DATA");
-        printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
-        printf("DATA=%.*s\r\n", event->data_len, event->data);
+        if ((listen_topic == NULL) || (interface_q == NULL))
+        {
+            ESP_LOGI(TAG,"listen topic not initialized, break");
+            break;
+        }
+        struct mqtt_msg msg;
+        sprintf(msg.topic, "%.*s", event->topic_len, event->topic);
+        sprintf(msg.msg, "%.*s", event->data_len, event->data);
+        if (xQueueSend(interface_q, &msg, 0) == pdFALSE)
+        {
+            ESP_LOGI(TAG, "queue is full");
+            break;
+        }
+        ESP_LOGI(TAG,"send out listen message");
         break;
     case MQTT_EVENT_ERROR:
         ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
@@ -60,7 +75,7 @@ esp_err_t start_mqtt(esp_mqtt_client_handle_t *client_ptr)
     /*generate some random client name to avoid collision on MQTT broker
     esp_ramdom() returns true random number when wifi is enabled*/
     char client_name[20];
-    sprintf(client_name,"ESP32:%d",esp_random());
+    sprintf(client_name, "ESP32:%d", esp_random());
 
     mqtt_event_group = xEventGroupCreate();
     esp_mqtt_client_config_t mqtt_cfg = {
@@ -71,15 +86,34 @@ esp_err_t start_mqtt(esp_mqtt_client_handle_t *client_ptr)
     *client_ptr = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_register_event(*client_ptr, ESP_EVENT_ANY_ID, mqtt_event_handler, *client_ptr);
     esp_mqtt_client_start(*client_ptr);
-    ESP_LOGI(TAG,"wait for flag");
-    //EventBits_t bit = 
-    xEventGroupWaitBits(mqtt_event_group,MQTT_CONNECTED_BIT,pdFALSE,pdFALSE,portMAX_DELAY);
-    
+    ESP_LOGI(TAG, "wait for flag");
+    //EventBits_t bit =
+    xEventGroupWaitBits(mqtt_event_group, MQTT_CONNECTED_BIT, pdFALSE, pdFALSE, portMAX_DELAY);
+
     return (ESP_OK);
 }
 
-void mqtt_send(esp_mqtt_client_handle_t client, const char *topic,const char *data){
+void mqtt_send(esp_mqtt_client_handle_t client, const char *topic, const char *data)
+{
     int msg_id;
-    msg_id = esp_mqtt_client_publish(client,topic,data,0,1,0);
-    ESP_LOGD(TAG,"mqtt published, msg id=%d",msg_id);
+    msg_id = esp_mqtt_client_publish(client, topic, data, 0, 1, 0);
+    ESP_LOGD(TAG, "mqtt published, msg id=%d", msg_id);
+}
+
+void mqtt_listen(esp_mqtt_client_handle_t client, const char *topic, QueueHandle_t *msg_q)
+{
+    if (*msg_q != NULL)
+    {
+        vQueueDelete(*msg_q);
+    }
+    *msg_q = xQueueCreate(3, sizeof(struct mqtt_msg));
+    if (*msg_q == NULL)
+    {
+        ESP_LOGI(TAG, "create queue failed");
+        return;
+    }
+    interface_q = *msg_q;
+    listen_topic = topic;
+    printf("mqtt listen topic %s\n", listen_topic);
+    esp_mqtt_client_subscribe(client, listen_topic, 0);
 }

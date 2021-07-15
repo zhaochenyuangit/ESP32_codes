@@ -1,3 +1,4 @@
+#pragma once
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 
@@ -38,6 +39,12 @@
 #define MQTT_CONNECTED_BIT BIT0
 #define MQTT_ERROR_BIT BIT1
 
+struct mqtt_msg
+{
+    char topic[20];
+    char msg[20];
+};
+
 /**
  * @brief start wifi, reconnect when disconnect
  * @return ESP_OK when success
@@ -56,3 +63,4 @@ esp_err_t start_mqtt(esp_mqtt_client_handle_t *client);
  * @param data a string
  */
 void mqtt_send(esp_mqtt_client_handle_t client, const char *topic, const char *data);
+void mqtt_listen(esp_mqtt_client_handle_t client, const char *topic, QueueHandle_t *msg_q);

@@ -11,6 +11,7 @@ class HumanObject
 private:
     static int serial_num_;
     int label_;
+  
     int size_;
     int last_size_;
     int pos_x_;
