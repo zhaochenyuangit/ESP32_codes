@@ -10,7 +10,6 @@ ObjectList::ObjectList()
 {
     printf("init tracking...\n");
     count = 0;
-    n_ob = 0;
     ObjectNode *node = new ObjectNode;
     head = node;
     head->ob = NULL;
@@ -23,11 +22,6 @@ ObjectList::~ObjectList()
 {
     printf("destroy tracking...");
     count_and_delete_every_objects();
-}
-
-int ObjectList::get_n_objects()
-{
-    return n_ob;
 }
 
 ObjectNode *ObjectList::get_head_node()
@@ -60,7 +54,6 @@ bool ObjectList::append_object(HumanObject *ob)
     node->next = NULL;
     tail->next = node;
     tail = node;
-    n_ob += 1;
     return 0;
 }
 
@@ -92,7 +85,6 @@ bool ObjectList::delete_object_by_label(int label)
     /* delete node */
     to_delete->ob->~HumanObject();
     delete to_delete;
-    n_ob -= 1;
     return 0;
 }
 
@@ -112,7 +104,6 @@ bool ObjectList::count_and_delete_every_objects()
         }
         delete to_delete;
     }
-    n_ob = 0;
     return 0;
 }
 

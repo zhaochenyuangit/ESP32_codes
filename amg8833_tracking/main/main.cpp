@@ -23,12 +23,12 @@ int blob_detection(short *raw, uint8_t *result)
     static short holder2[IM_LEN];
     interpolation71x71(raw, im);
     image_copy(im, holder1, IM_LEN);
-    average_filter(holder1, IM_W, IM_H, 18);
+    average_filter(holder1, IM_W, IM_H, 36);
     grayscale_thresholding(im, holder2, IM_LEN, holder1, 0);
     int max_temp = max_of_array(holder2, IM_LEN);
     int std_temp = std_of_array(holder2, IM_LEN);
-    short th = max_temp - 2 * std_temp;
-    th = (th > 24 * 256) ? th : (24 * 256);
+    short th = max_temp - 3 * std_temp;
+    th = (th > 24 * 256) ? th : (22 * 256);
     binary_thresholding(holder2, result, IM_LEN, &th, 1);
     binary_fill_holes(result, IM_W, IM_H);
     int num = labeling8(result, IM_W, IM_H);
@@ -45,20 +45,22 @@ void image_process(void *_)
     {
         if (xQueueReceive(q_pixels, &pixel_value, portMAX_DELAY) == pdTRUE)
         {
+#ifndef UART_SIM
             gettimeofday(&now, NULL);
             if ((now.tv_sec - last_entry.tv_sec) > 2)
             {
                 tracking.count_and_delete_every_objects();
             }
             last_entry = now;
+#endif
             performance_evaluation(0);
             sh_array_to_string(pixel_value, pixel_msg_buf, SNR_SZ);
             xSemaphoreGive(sema_raw);
             int n_blobs = blob_detection(pixel_value, mask);
             printf("detected %d blobs\n", n_blobs);
 
-            //c_array_to_string(mask, mask_msg_buf, IM_LEN);
-            //xSemaphoreGive(sema_im);
+            c_array_to_string(mask, mask_msg_buf, IM_LEN);
+            xSemaphoreGive(sema_im);
             Blob *blob_list = extract_feature(mask, n_blobs, IM_W, IM_H);
             tracking.matching(blob_list, n_blobs);
             delete_blob_list(blob_list, n_blobs);

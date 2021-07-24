@@ -16,7 +16,6 @@ private:
     ObjectNode *head;
     ObjectNode *tail;
     ObjectNode *p;
-    unsigned int n_ob;
     int count;
 
 private:
@@ -28,8 +27,7 @@ private:
 public:
     ObjectList();
     ~ObjectList();
-
-    int get_n_objects();
+    
     ObjectNode *get_head_node();
     int get_count();
     void reset_count();
